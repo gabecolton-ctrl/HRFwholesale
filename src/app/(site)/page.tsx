@@ -62,10 +62,10 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-full bg-[radial-gradient(60rem_30rem_at_85%_-10%,rgba(180,80,43,0.10),transparent)]" />
-        <div className="container-x relative grid gap-10 py-12 sm:py-20 lg:grid-cols-[1.15fr_1fr] lg:items-center">
+        <div className="container-x relative grid gap-8 pt-6 pb-12 sm:pt-8 sm:pb-16 lg:grid-cols-[1.15fr_1fr] lg:items-start lg:gap-10">
           <div>
             <p className="pill bg-white text-ink-soft ring-1 ring-line">Based in Dallas · Buying nationwide</p>
-            <h1 className="h-display mt-5 text-4xl leading-[1.05] font-semibold sm:text-5xl lg:text-6xl">
+            <h1 className="h-display mt-4 text-4xl leading-[1.05] font-semibold sm:text-5xl lg:text-6xl">
               We buy houses for cash, nationwide.
             </h1>
             <p className="mt-5 max-w-xl text-lg text-ink-soft">
