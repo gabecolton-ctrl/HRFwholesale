@@ -143,6 +143,11 @@ export default function Home() {
               </p>
             </div>
             <dl className="divide-y divide-line border-t border-line text-sm sm:border-t-0 sm:border-l">
+              <div className="grid grid-cols-[1.3fr_1fr_1fr] gap-2 bg-paper/70 px-6 py-3 text-xs font-bold tracking-wide uppercase">
+                <span className="sr-only">Topic</span><span aria-hidden="true" />
+                <span className="text-sage">Sell to us</span>
+                <span className="text-ink-soft">List with an agent</span>
+              </div>
               {[
                 ["Repairs and cleaning", "None", "Usually required"],
                 ["Agent commission", "None", "Often 5–6%"],
