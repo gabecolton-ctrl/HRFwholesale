@@ -6,7 +6,7 @@ export const site = {
   tagline: "Local cash home buyers in Dallas–Fort Worth",
   phone: "(469) 224-3258",
   phoneHref: "tel:+14692243258",
-  email: "offers@hrfwholesale.com", // TODO: your business email
+  email: "offers@hrfassets.com",
   city: "Dallas, TX",
   serviceArea: "Dallas, Collin, Tarrant, Denton and Ellis counties",
   hours: "Mon–Sat, 8am–7pm",
