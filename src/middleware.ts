@@ -5,12 +5,27 @@ import { NextResponse, type NextRequest } from "next/server";
 // visitors out of the CRM and the buyer portal. (Role checks happen in the
 // pages and, more importantly, in the database.)
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  const path = request.nextUrl.pathname;
+  const isPrivate =
+    path.startsWith("/crm") || path.startsWith("/portal") || path.startsWith("/api/export") || path.startsWith("/api/files");
+  const toLogin = (reason?: string) => {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = `?next=${encodeURIComponent(path)}${reason ? `&error=${reason}` : ""}`;
+    return NextResponse.redirect(url);
+  };
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) {
+    // Not configured yet: never crash public pages; keep private ones closed.
+    console.error("Supabase environment variables are missing");
+    return isPrivate ? toLogin("config") : NextResponse.next({ request });
+  }
+
+  let response = NextResponse.next({ request });
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -21,22 +36,16 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
         },
       },
-    },
-  );
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
-  const isPrivate = path.startsWith("/crm") || path.startsWith("/portal") || path.startsWith("/api/export") || path.startsWith("/api/files");
-  if (isPrivate && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = `?next=${encodeURIComponent(path)}`;
-    return NextResponse.redirect(url);
+    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (isPrivate && !user) return toLogin();
+    return response;
+  } catch (e) {
+    console.error("Session check failed", e);
+    return isPrivate ? toLogin("config") : NextResponse.next({ request });
   }
-  return response;
 }
 
 export const config = {

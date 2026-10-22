@@ -14,8 +14,16 @@ function safeNext(n: FormDataEntryValue | null) {
 export async function signIn(_prev: LoginState, fd: FormData): Promise<LoginState> {
   const email = String(fd.get("email") ?? "").trim();
   const password = String(fd.get("password") ?? "");
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return { error: "Sign-in isn't connected yet: add the Supabase keys in Vercel and redeploy.", email };
+  }
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  let data, error;
+  try {
+    ({ data, error } = await supabase.auth.signInWithPassword({ email, password }));
+  } catch {
+    return { error: "Couldn't reach the login service. Check the Supabase URL and key in Vercel.", email };
+  }
   if (error || !data.user) {
     const msg = error?.message?.toLowerCase().includes("confirm")
       ? "Please confirm your email first. Check your inbox for the link."
