@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { createLead, updateLead, type LeadFormState } from "@/app/crm/leads/actions";
 import { SubmitButton } from "@/components/SubmitButton";
-import { CONDITIONS, LEAD_SOURCES, LEAD_STATUSES, PROPERTY_TYPES, TIMELINES, VA_STATUSES, type AppRole } from "@/lib/constants";
+import { CONDITIONS, LEAD_SOURCES, LEAD_STATUSES, PROPERTY_TYPES, TIMELINES, US_STATES, VA_STATUSES, type AppRole } from "@/lib/constants";
 
 export type LeadRow = Record<string, unknown> & { id?: string };
 type Staff = { id: string; full_name: string | null; email: string | null };
@@ -46,6 +46,7 @@ export function LeadForm({ lead = {}, role, staff = [] }: { lead?: LeadRow; role
       <Section title="Property">
         <Field label="Property address" name="address" d={v(lead, "address")} required wide />
         <Field label="City" name="city" d={v(lead, "city")} />
+        <Select label="State" name="state" d={v(lead, "state") || "TX"} options={US_STATES} noEmpty />
         <Field label="ZIP" name="zip" d={v(lead, "zip")} inputMode="numeric" />
         <Field label="County" name="county" d={v(lead, "county")} />
         <Select label="Property type" name="property_type" d={v(lead, "property_type")} options={PROPERTY_TYPES} />
@@ -140,8 +141,8 @@ function Field({ label, name, d, type = "text", required, wide, inputMode, hint 
   );
 }
 
-function Select({ label, name, d, options, emptyLabel = "—" }: {
-  label: string; name: string; d: string; options: readonly (string | [string, string])[]; emptyLabel?: string;
+function Select({ label, name, d, options, emptyLabel = "—", noEmpty }: {
+  label: string; name: string; d: string; options: readonly (string | [string, string])[]; emptyLabel?: string; noEmpty?: boolean;
 }) {
   const opts = options.map((o) => (Array.isArray(o) ? o : [o, o]));
   const known = opts.some(([val]) => val === d);
@@ -149,7 +150,7 @@ function Select({ label, name, d, options, emptyLabel = "—" }: {
     <div>
       <label className="label" htmlFor={name}>{label}</label>
       <select id={name} name={name} className="input" defaultValue={d}>
-        <option value="">{emptyLabel}</option>
+        {!noEmpty && <option value="">{emptyLabel}</option>}
         {!known && d && <option value={d}>{d}</option>}
         {opts.map(([val, lab]) => <option key={val} value={val}>{lab}</option>)}
       </select>

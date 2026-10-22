@@ -7,7 +7,7 @@ export default function Contact() {
   return (
     <section className="container-x max-w-4xl py-12 sm:py-16">
       <h1 className="h-display text-4xl font-semibold sm:text-5xl">Contact us</h1>
-      <p className="mt-4 text-lg text-ink-soft">We're a local team in {site.city}. Real people answer the phone.</p>
+      <p className="mt-4 text-lg text-ink-soft">We're based in {site.city} and buy houses nationwide. Real people answer the phone.</p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2">
         <a href={site.phoneHref} className="card block p-6 hover:border-ink-soft">
           <p className="text-sm font-semibold text-ink-soft uppercase">Call or text</p>

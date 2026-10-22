@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { looksLikeBot, requestMeta } from "@/lib/request-meta";
 import { SELLER_CONSENT_TEXT, SELLER_CONSENT_VERSION } from "@/lib/site";
 import { phoneDigits, phonePretty } from "@/lib/format";
+import { STATE_CODES } from "@/lib/constants";
 import { notifyTeam } from "@/lib/email";
 import { site } from "@/lib/site";
 
@@ -21,6 +22,7 @@ const schema = z.object({
   email: z.union([z.literal(""), z.email("Please check your email address")]),
   address: z.string().trim().min(5, "Please enter the property address").max(200),
   city: z.string().trim().max(80).optional().default(""),
+  state: z.string().trim().refine((s) => STATE_CODES.includes(s), "Please choose the state the property is in"),
   zip: z
     .string()
     .trim()
@@ -35,7 +37,7 @@ const schema = z.object({
 
 export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<FormState> {
   const raw = Object.fromEntries(
-    ["name", "phone", "email", "address", "city", "zip", "condition", "timeline", "reason"].map((k) => [k, String(fd.get(k) ?? "")]),
+    ["name", "phone", "email", "address", "city", "state", "zip", "condition", "timeline", "reason"].map((k) => [k, String(fd.get(k) ?? "")]),
   );
   if (looksLikeBot(fd)) redirect("/sell/thanks"); // silently drop bots
 
@@ -55,6 +57,7 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
       email: v.email || null,
       address: v.address,
       city: v.city || null,
+      state: v.state,
       zip: v.zip || null,
       condition: v.condition || null,
       timeline: v.timeline || null,
@@ -92,7 +95,7 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
     `New seller lead: ${v.address}`,
     [
       `${v.name} · ${phonePretty(v.phone)}${v.email ? ` · ${v.email}` : ""}`,
-      `${v.address}${v.city ? `, ${v.city}` : ""} ${v.zip}`,
+      `${v.address}${v.city ? `, ${v.city}` : ""}, ${v.state} ${v.zip}`,
       [v.condition, v.timeline].filter(Boolean).join(" · "),
       v.reason ? `Reason: ${v.reason}` : "",
     ].filter(Boolean),

@@ -16,7 +16,7 @@ export default async function Leads({ searchParams }: { searchParams: Promise<SP
 
   let q = supabase
     .from("leads")
-    .select("id,seller_name,phone,address,city,zip,status,motivation,lead_source,next_follow_up,keep_candidate,do_not_call,created_at", { count: "exact" });
+    .select("id,seller_name,phone,address,city,state,zip,status,motivation,lead_source,next_follow_up,keep_candidate,do_not_call,created_at", { count: "exact" });
   if (sp.status) q = q.eq("status", sp.status);
   else q = q.not("status", "in", "(Closed,Dead)");
   if (sp.source) q = q.eq("lead_source", sp.source);
@@ -111,7 +111,7 @@ export default async function Leads({ searchParams }: { searchParams: Promise<SP
                       <Link href={`/crm/leads/${l.id}`} className="font-semibold hover:underline">{l.seller_name}</Link>
                       <div className="text-xs text-ink-soft">{phonePretty(l.phone)}</div>
                     </td>
-                    <td>{l.address}<div className="text-xs text-ink-soft">{[l.city, l.zip].filter(Boolean).join(" ")}</div></td>
+                    <td>{l.address}<div className="text-xs text-ink-soft">{[l.city, l.state, l.zip].filter(Boolean).join(" ")}</div></td>
                     <td><StatusPill status={l.status} /> {l.keep_candidate && <Flag tone="sage">Keep</Flag>} {l.do_not_call && <Flag tone="danger">DNC</Flag>}</td>
                     <td>{l.motivation ?? "—"}</td>
                     <td className="text-ink-soft">{l.lead_source ?? "—"}</td>

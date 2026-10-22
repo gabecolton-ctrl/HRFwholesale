@@ -12,7 +12,7 @@ export function Logo({ href = "/", light = false }: { href?: string; light?: boo
       <span className={`leading-tight ${light ? "text-white" : "text-ink"}`}>
         <span className="h-display block text-base font-semibold whitespace-nowrap sm:text-lg">H.R.F Assets LLC</span>
         <span className={`block text-[11px] font-medium tracking-wide uppercase ${light ? "text-white/70" : "text-ink-soft"}`}>
-          Dallas–Fort Worth
+          Cash home buyers · Nationwide
         </span>
       </span>
     </Link>

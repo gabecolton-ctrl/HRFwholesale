@@ -118,9 +118,9 @@ export default async function PortalDealPage({ params, searchParams }: {
               <>
                 <h2 className="font-semibold">Address</h2>
                 <p className="mt-1 text-lg">{d.address}</p>
-                <p className="text-sm text-ink-soft">{[d.city, "TX", d.zip].filter(Boolean).join(" ")}</p>
+                <p className="text-sm text-ink-soft">{[d.city, d.state, d.zip].filter(Boolean).join(" ")}</p>
                 <a className="btn btn-ghost btn-sm mt-3" target="_blank" rel="noreferrer"
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${d.address} ${d.city ?? ""} TX ${d.zip ?? ""}`)}`}>Open in Maps</a>
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${d.address} ${d.city ?? ""} ${d.state ?? ""} ${d.zip ?? ""}`)}`}>Open in Maps</a>
                 <p className="hint mt-2">Please don't contact the seller or visit without scheduling a walkthrough with us.</p>
               </>
             )}

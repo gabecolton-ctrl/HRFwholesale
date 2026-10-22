@@ -143,4 +143,22 @@ begin
 end $$;
 reset role;
 
+-- ===== nationwide: state on deals, state in buy box =====
+select pg_temp.login('');
+insert into public.cash_buyers (id, name, email, areas) values ('40000000-0000-0000-0000-000000000009','Ohio Buyer','oh@hrf.test','{Ohio}');
+insert into public.deals (id, address, city, state, zip, contract_signed_date, list_price, seller_disclosure_signed, seller_disclosure_date, published_to_portal, status)
+values ('50000000-0000-0000-0000-000000000009','5 Lake Rd','Columbus','OH','43201',current_date,90000,true,current_date,true,'Marketing');
+do $$ begin
+  assert exists (select 1 from public.matching_buyers('50000000-0000-0000-0000-000000000009') where buyer_id = '40000000-0000-0000-0000-000000000009'),
+    'buyer listing "Ohio" matches an OH deal';
+  assert not exists (select 1 from public.matching_buyers('50000000-0000-0000-0000-000000000001') where buyer_id = '40000000-0000-0000-0000-000000000009'),
+    'Ohio buyer does not match a Texas deal';
+end $$;
+set role authenticated;
+select pg_temp.login('00000000-0000-0000-0000-0000000000b1');
+do $$ begin
+  assert (select state from public.portal_deals() where id = '50000000-0000-0000-0000-000000000009') = 'OH', 'portal shows state';
+end $$;
+reset role;
+
 \echo 'ALL PHASE 2 TESTS PASSED'

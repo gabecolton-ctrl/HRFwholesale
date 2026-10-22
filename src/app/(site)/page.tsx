@@ -52,7 +52,7 @@ const faqs = [
   },
   {
     q: "Where do you buy?",
-    a: `Across Dallas–Fort Worth, including ${site.serviceArea}.`,
+    a: `Nationwide. We're based in ${site.city} and buy in ${site.serviceArea}. Tell us where your house is and we'll take a look.`,
   },
 ];
 
@@ -64,9 +64,9 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-full bg-[radial-gradient(60rem_30rem_at_85%_-10%,rgba(180,80,43,0.10),transparent)]" />
         <div className="container-x relative grid gap-10 py-12 sm:py-20 lg:grid-cols-[1.15fr_1fr] lg:items-center">
           <div>
-            <p className="pill bg-white text-ink-soft ring-1 ring-line">Local Dallas buyers · {site.hours}</p>
+            <p className="pill bg-white text-ink-soft ring-1 ring-line">Based in Dallas · Buying nationwide</p>
             <h1 className="h-display mt-5 text-4xl leading-[1.05] font-semibold sm:text-5xl lg:text-6xl">
-              We buy houses in Dallas–Fort Worth for cash.
+              We buy houses for cash, nationwide.
             </h1>
             <p className="mt-5 max-w-xl text-lg text-ink-soft">
               Sell as-is, skip the repairs and showings, and pay no agent fees. Get a no-obligation offer and close on
@@ -88,7 +88,7 @@ export default function Home() {
             <label htmlFor="hero-address" className="label mt-5">
               Property address
             </label>
-            <input id="hero-address" name="address" className="input" placeholder="1234 Main St, Dallas, TX" autoComplete="street-address" required />
+            <input id="hero-address" name="address" className="input" placeholder="1234 Main St, City, State" autoComplete="street-address" required />
             <button className="btn btn-primary mt-4 w-full">Continue</button>
             <ul className="mt-5 space-y-2 text-sm text-ink-soft">
               {["Any condition", "No commissions or fees", "You choose the closing date"].map((t) => (

@@ -19,6 +19,7 @@ function readLead(fd: FormData) {
     mailing_address: toText(fd.get("mailing_address")),
     address: toText(fd.get("address")),
     city: toText(fd.get("city")),
+    state: (toText(fd.get("state")) ?? "TX").toUpperCase().slice(0, 2),
     zip: toText(fd.get("zip")),
     county: toText(fd.get("county")),
     property_type: toText(fd.get("property_type")),

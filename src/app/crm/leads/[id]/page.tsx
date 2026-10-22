@@ -46,7 +46,7 @@ export default async function LeadPage({ params, searchParams }: {
       <div className="mb-3 text-sm"><Link href="/crm/leads" className="text-ink-soft underline">← Leads</Link></div>
       <PageHeader
         title={lead.seller_name}
-        sub={<>{lead.address}{lead.city ? `, ${lead.city}` : ""} {lead.zip ?? ""}</>}
+        sub={<>{lead.address}{lead.city ? `, ${lead.city}` : ""}{lead.state ? `, ${lead.state}` : ""} {lead.zip ?? ""}</>}
         actions={canDeal ? <Link href={`/crm/pipeline/new?lead=${id}`} className="btn btn-primary btn-sm">Put under contract</Link> : undefined}
       />
       {sp.saved && <Notice>Saved.</Notice>}
@@ -76,7 +76,7 @@ export default async function LeadPage({ params, searchParams }: {
                 {lead.phone && <a href={`tel:${lead.phone}`} className="btn btn-primary btn-sm">Call {phonePretty(lead.phone)}</a>}
                 {lead.phone && <a href={`sms:${lead.phone}`} className="btn btn-ghost btn-sm">Text</a>}
                 {lead.email && <a href={`mailto:${lead.email}`} className="btn btn-ghost btn-sm">Email</a>}
-                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lead.address} ${lead.city ?? ""} TX ${lead.zip ?? ""}`)}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Map</a>
+                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lead.address} ${lead.city ?? ""} ${lead.state ?? ""} ${lead.zip ?? ""}`)}`} target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm">Map</a>
               </div>
             )}
             {!lead.do_not_call && !["Under contract", "Closed", "Dead"].includes(lead.status) && (

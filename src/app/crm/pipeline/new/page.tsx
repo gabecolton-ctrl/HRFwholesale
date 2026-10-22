@@ -23,7 +23,7 @@ export default async function NewDeal({ searchParams }: { searchParams: Promise<
     if (l) {
       prefill = {
         ...prefill,
-        lead_id: l.id, address: l.address, city: l.city, zip: l.zip, property_type: l.property_type,
+        lead_id: l.id, address: l.address, city: l.city, state: l.state, zip: l.zip, property_type: l.property_type,
         beds: l.beds, baths: l.baths, sqft: l.sqft, year_built: l.year_built,
         arv: l.est_arv, repair_estimate: l.est_repairs, contract_price: l.offer_amount,
       };

@@ -4,9 +4,9 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
-  title: { default: `Sell Your House Fast for Cash in Dallas–Fort Worth | ${site.brand}`, template: `%s | ${site.brand}` },
+  title: { default: `Sell Your House Fast for Cash, Nationwide | ${site.brand}`, template: `%s | ${site.brand}` },
   description:
-    "Get a fair cash offer for your Dallas–Fort Worth house. No repairs, no cleaning, no agent fees. Close on your timeline.",
+    "Get a fair cash offer for your house, anywhere in the U.S. No repairs, no cleaning, no agent fees. Close on your timeline.",
   openGraph: { siteName: site.brand, type: "website", locale: "en_US" },
 };
 

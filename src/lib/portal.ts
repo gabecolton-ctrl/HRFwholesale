@@ -3,6 +3,7 @@ export type PortalDeal = {
   status: "Available" | "Pending";
   area: string | null;
   city: string | null;
+  state: string | null;
   zip: string | null;
   property_type: string | null;
   beds: number | null;
@@ -26,8 +27,8 @@ export function publicPhoto(path: string) {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/deal-photos/${path}`;
 }
 
-export function where(d: Pick<PortalDeal, "area" | "city" | "zip">) {
-  return [d.area, d.city].filter(Boolean).join(", ") || (d.zip ? `ZIP ${d.zip}` : "Dallas–Fort Worth");
+export function where(d: Pick<PortalDeal, "area" | "city" | "state" | "zip">) {
+  return [d.area, d.city, d.state].filter(Boolean).join(", ") || (d.zip ? `ZIP ${d.zip}` : "United States");
 }
 
 export function specs(d: Pick<PortalDeal, "beds" | "baths" | "sqft">) {
@@ -41,7 +42,7 @@ type BuyBox = { areas: string[]; price_min: number | null; price_max: number | n
 /** Same rules as the database's alert matching, for the "Fits your buy box" badge. */
 export function fitsBuyBox(d: PortalDeal, b: BuyBox | null) {
   if (!b) return false;
-  const hay = [d.zip, d.city, d.area].filter(Boolean).map((x) => String(x).toLowerCase());
+  const hay = [d.zip, d.city, d.area, d.state].filter(Boolean).map((x) => String(x).toLowerCase());
   const areaOk =
     b.areas.length === 0 ||
     b.areas.some((a) => {

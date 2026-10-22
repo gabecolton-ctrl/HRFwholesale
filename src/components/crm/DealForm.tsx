@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { createDeal, updateDeal, type DealFormState } from "@/app/crm/pipeline/actions";
 import { SubmitButton } from "@/components/SubmitButton";
-import { DEAL_STATUSES, EXIT_STRATEGIES, PROPERTY_TYPES, REHAB_LEVELS, type AppRole } from "@/lib/constants";
+import { DEAL_STATUSES, EXIT_STRATEGIES, PROPERTY_TYPES, REHAB_LEVELS, US_STATES, type AppRole } from "@/lib/constants";
 import { ASSIGNMENT_DISCLOSURE } from "@/lib/site";
 import { CompsEditor } from "@/components/crm/CompsEditor";
 
@@ -55,6 +55,7 @@ export function DealForm({ deal = {}, role, buyers, reps }: { deal?: Deal; role:
       <Card title="Property">
         <F label="Address" name="address" d={s(deal, "address")} required wide />
         <F label="City" name="city" d={s(deal, "city")} />
+        <Sel label="State" name="state" d={s(deal, "state") || "TX"} options={US_STATES} noEmpty />
         <F label="ZIP" name="zip" d={s(deal, "zip")} />
         <F label="Area / neighborhood (shown to buyers)" name="area" d={s(deal, "area")} wide />
         <Sel label="Property type" name="property_type" d={s(deal, "property_type")} options={PROPERTY_TYPES} />
@@ -85,7 +86,7 @@ export function DealForm({ deal = {}, role, buyers, reps }: { deal?: Deal; role:
         </div>
       </Card>
 
-      <Card title="Texas equitable-interest disclosures">
+      <Card title="Equitable-interest disclosures">
         <p className="col-span-full text-sm text-ink-soft">
           Every buyer-facing listing will carry: <em>&ldquo;{ASSIGNMENT_DISCLOSURE}&rdquo;</em>
         </p>

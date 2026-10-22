@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { submitSellerLead, type FormState } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BotFields } from "@/components/BotFields";
-import { CONDITIONS, SELL_REASONS, TIMELINES } from "@/lib/constants";
+import { CONDITIONS, SELL_REASONS, TIMELINES, US_STATES } from "@/lib/constants";
 import { SELLER_CONSENT_TEXT, site } from "@/lib/site";
 
 export function SellForm({ initialAddress }: { initialAddress?: string }) {
@@ -45,10 +45,17 @@ export function SellForm({ initialAddress }: { initialAddress?: string }) {
           <label htmlFor="address" className="label">Property address</label>
           <input id="address" name="address" className="input" autoComplete="street-address" required defaultValue={f.address ?? initialAddress} />
         </div>
-        <div className="grid grid-cols-[1fr_8rem] gap-4">
-          <div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-[1fr_10rem_8rem]">
+          <div className="col-span-2 sm:col-span-1">
             <label htmlFor="city" className="label">City</label>
             <input id="city" name="city" className="input" autoComplete="address-level2" defaultValue={f.city} />
+          </div>
+          <div>
+            <label htmlFor="state" className="label">State</label>
+            <select id="state" name="state" className="input" autoComplete="address-level1" required defaultValue={f.state ?? ""}>
+              <option value="">Select…</option>
+              {US_STATES.map(([c, n]) => <option key={c} value={c}>{n}</option>)}
+            </select>
           </div>
           <div>
             <label htmlFor="zip" className="label">ZIP</label>

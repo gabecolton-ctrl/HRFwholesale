@@ -76,7 +76,7 @@ export function Analyzer({ init, rates, lead }: { init: Init; rates: Rates; lead
 
         <section className="card grid gap-4 p-4 sm:grid-cols-3 sm:p-5">
           <h2 className="col-span-full text-sm font-bold tracking-wide text-ink-soft uppercase">Your numbers</h2>
-          <div><label className="label" htmlFor="mao_pct">MAO %</label><input id="mao_pct" name="mao_pct" className="input" inputMode="decimal" value={pct} onChange={(e) => setPct(e.target.value)} /><p className="hint">70% to start; some DFW areas support 75–80%.</p></div>
+          <div><label className="label" htmlFor="mao_pct">MAO %</label><input id="mao_pct" name="mao_pct" className="input" inputMode="decimal" value={pct} onChange={(e) => setPct(e.target.value)} /><p className="hint">70% to start; some markets support 75–80%.</p></div>
           <div><label className="label" htmlFor="fee">Your fee</label><input id="fee" name="fee" className="input" inputMode="numeric" value={fee} onChange={(e) => setFee(e.target.value)} /></div>
           <div><label className="label" htmlFor="price">Asking / contract price</label><input id="price" name="price" className="input" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
         </section>

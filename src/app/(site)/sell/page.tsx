@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Get a Cash Offer for Your House",
-  description: "Tell us about your Dallas–Fort Worth property and get a no-obligation cash offer. No repairs, no fees.",
+  description: "Tell us about your property, anywhere in the U.S., and get a no-obligation cash offer. No repairs, no fees.",
 };
 
 export default async function SellPage({ searchParams }: { searchParams: Promise<{ address?: string }> }) {

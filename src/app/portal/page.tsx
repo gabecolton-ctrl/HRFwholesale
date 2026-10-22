@@ -21,7 +21,7 @@ export default async function PortalDeals({ searchParams }: { searchParams: Prom
   const max = toNumber(sp.max ?? null);
   const term = (sp.area ?? "").trim().toLowerCase();
   const deals = all.filter((d) => {
-    if (term && ![d.area, d.city, d.zip].some((x) => (x ?? "").toLowerCase().includes(term))) return false;
+    if (term && ![d.area, d.city, d.state, d.zip].some((x) => (x ?? "").toLowerCase().includes(term))) return false;
     if (max !== null && d.list_price !== null && d.list_price > max) return false;
     if (sp.rehab && d.rehab_level !== sp.rehab) return false;
     if (sp.mine === "1" && !fitsBuyBox(d, me)) return false;

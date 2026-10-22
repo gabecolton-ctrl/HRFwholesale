@@ -28,7 +28,7 @@ export async function sendDealAlerts(dealId: string, scope: "A" | "rest") {
   const db = createAdminClient();
   const { data: d } = await db
     .from("deals")
-    .select("id,area,city,zip,property_type,beds,baths,sqft,list_price,assignment_price,arv,repair_estimate,rehab_level,closing_date,photo_paths,published_to_portal,status")
+    .select("id,area,city,state,zip,property_type,beds,baths,sqft,list_price,assignment_price,arv,repair_estimate,rehab_level,closing_date,photo_paths,published_to_portal,status")
     .eq("id", dealId)
     .single();
   if (!d || !d.published_to_portal) return { sent: 0, failed: 0, skipped: 0, note: "Deal isn't published to the portal." };
@@ -39,7 +39,7 @@ export async function sendDealAlerts(dealId: string, scope: "A" | "rest") {
   if (targets.length === 0) return { sent: 0, failed: 0, skipped: 0, note: "No new matching buyers to email." };
   if (!emailConfigured()) return { sent: 0, failed: 0, skipped: targets.length, note: "Email sending isn't set up yet (Resend), so nothing was sent." };
 
-  const where = [d.area, d.city].filter(Boolean).join(", ") || d.zip || "DFW";
+  const where = [d.area, d.city, d.state].filter(Boolean).join(", ") || d.zip || "U.S.";
   const specs = [d.beds && `${d.beds} bd`, d.baths && `${d.baths} ba`, d.sqft && `${Number(d.sqft).toLocaleString()} sqft`].filter(Boolean).join(" · ");
   const price = d.list_price ?? d.assignment_price;
   const subject = `New deal: ${specs ? specs.replace(/ · .*$/, "") + " in " : ""}${where} · ${money(price)}`;

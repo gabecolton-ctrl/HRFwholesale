@@ -3,13 +3,13 @@
 export const site = {
   legalName: "H.R.F Assets LLC",
   brand: "H.R.F Assets LLC",
-  tagline: "Local cash home buyers in Dallas–Fort Worth",
+  tagline: "Cash home buyers nationwide",
   phone: "(469) 224-3258",
   phoneHref: "tel:+14692243258",
   email: "offers@hrfassets.com",
-  city: "Dallas, TX",
-  serviceArea: "Dallas, Collin, Tarrant, Denton and Ellis counties",
-  hours: "Mon–Sat, 8am–7pm",
+  city: "Dallas, TX", // headquarters
+  serviceArea: "cities, suburbs and rural areas across the United States",
+  hours: "Mon–Sat, 8am–7pm CT",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://hrfwholesale.com",
   // Required by law (CAN-SPAM) at the bottom of every deal alert email.
   // A P.O. box or registered mailbox is fine. TODO: put your business mailing address.

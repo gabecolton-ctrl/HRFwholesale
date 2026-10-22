@@ -37,7 +37,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <div className="lg:col-span-2">
             <Logo light />
             <p className="mt-4 max-w-sm text-sm">
-              A local Dallas company that buys houses for cash across {site.serviceArea}. Any condition, any situation.
+              A Dallas-based company that buys houses for cash nationwide. Any condition, any situation.
             </p>
           </div>
           <div>

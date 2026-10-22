@@ -11,7 +11,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export type DealFormState = { error?: string };
 
-const TEXT = ["address", "city", "zip", "area", "property_type", "description", "title_company", "cancel_reason", "notes"];
+const TEXT = ["address", "city", "state", "zip", "area", "property_type", "description", "title_company", "cancel_reason", "notes"];
 const NUM = ["beds", "baths", "sqft", "year_built", "arv", "repair_estimate", "contract_price", "earnest_money", "option_fee", "assignment_price", "buyer_emd", "list_price"];
 
 type Comp = { address: string; sold_price: number | null; sold_date: string | null; beds: number | null; baths: number | null; sqft: number | null; distance: string | null };

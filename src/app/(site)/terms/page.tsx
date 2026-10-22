@@ -23,7 +23,7 @@ export default function Terms() {
       <p>
         In some transactions we may sell or assign our interest in a purchase contract rather than take title to the
         property. We disclose this in writing to sellers before they sign and to buyers before they sign an assignment,
-        as Texas law requires. On every deal shown to investors: <em>"{ASSIGNMENT_DISCLOSURE}"</em>
+        as Texas law and the laws of many other states require. On every deal shown to investors: <em>"{ASSIGNMENT_DISCLOSURE}"</em>
       </p>
       <h2>Investor accounts</h2>
       <ul>

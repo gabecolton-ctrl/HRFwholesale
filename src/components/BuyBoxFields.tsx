@@ -30,8 +30,8 @@ export function BuyBoxFields({ d = {} }: { d?: Defaults }) {
   return (
     <div className="space-y-5">
       <div>
-        <label htmlFor="areas" className="label">ZIP codes or areas you buy in</label>
-        <textarea id="areas" name="areas" rows={2} className="input" placeholder="75217, 75216, Oak Cliff, Garland" defaultValue={areas} />
+        <label htmlFor="areas" className="label">ZIP codes, cities, areas or states you buy in</label>
+        <textarea id="areas" name="areas" rows={2} className="input" placeholder="75217, Oak Cliff, Columbus, Ohio, FL" defaultValue={areas} />
         <p className="hint">Separate with commas.</p>
       </div>
       <div className="grid grid-cols-2 gap-4">

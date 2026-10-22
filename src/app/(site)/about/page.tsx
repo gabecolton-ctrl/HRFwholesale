@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Prose } from "@/components/Prose";
 import { site } from "@/lib/site";
 
-export const metadata = { title: "About Us", description: "A local Dallas company that buys houses for cash across DFW." };
+export const metadata = { title: "About Us", description: "A Dallas-based company that buys houses for cash nationwide." };
 
 export default function About() {
   return (
     <Prose title="About H.R.F Assets LLC">
       <p>
-        {site.legalName} is a Dallas-based real estate company. We buy houses across {site.serviceArea}, in any
+        {site.legalName} is a Dallas-based real estate company. We buy houses nationwide, in {site.serviceArea}, in any
         condition, from owners who want a simple, certain sale without repairs, showings or agent fees.
       </p>
       <h2>How we work</h2>
