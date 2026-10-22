@@ -6,7 +6,7 @@ export const metadata = { title: "About Us", description: "A local Dallas compan
 
 export default function About() {
   return (
-    <Prose title="About H.R.F Assets">
+    <Prose title="About H.R.F Assets LLC">
       <p>
         {site.legalName} is a Dallas-based real estate company. We buy houses across {site.serviceArea}, in any
         condition, from owners who want a simple, certain sale without repairs, showings or agent fees.

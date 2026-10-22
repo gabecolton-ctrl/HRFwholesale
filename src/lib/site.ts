@@ -2,7 +2,7 @@
 // Edit these before launch.
 export const site = {
   legalName: "H.R.F Assets LLC",
-  brand: "H.R.F Assets",
+  brand: "H.R.F Assets LLC",
   tagline: "Local cash home buyers in Dallas–Fort Worth",
   phone: "(469) 224-3258",
   phoneHref: "tel:+14692243258",

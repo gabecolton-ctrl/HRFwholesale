@@ -23,7 +23,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <a href={site.phoneHref} className="hidden px-3 py-2 text-sm font-semibold text-ink md:block">
               {site.phone}
             </a>
-            <Link href="/sell" className="btn btn-primary btn-sm sm:min-h-11 sm:px-4 sm:text-sm">
+            <Link href="/sell" className="btn btn-primary btn-sm shrink-0 px-2.5 sm:min-h-11 sm:px-4 sm:text-sm">
               Get my cash offer
             </Link>
           </nav>

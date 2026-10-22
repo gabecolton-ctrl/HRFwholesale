@@ -24,7 +24,7 @@ export default async function Portal({ searchParams }: { searchParams: Promise<{
       <main className="container-x max-w-3xl space-y-6 py-8">
         <div>
           <h1 className="h-display text-3xl font-semibold">Welcome, {profile.full_name?.split(" ")[0] ?? "investor"}</h1>
-          <p className="mt-1 text-ink-soft">Your buyer account with H.R.F Assets.</p>
+          <p className="mt-1 text-ink-soft">Your buyer account with H.R.F Assets LLC.</p>
         </div>
         {saved && <p className="rounded-lg bg-sage/10 px-4 py-3 text-sm font-medium text-sage">Saved.</p>}
         {error && <p className="rounded-lg bg-danger/5 px-4 py-3 text-sm font-medium text-danger">{error}</p>}
