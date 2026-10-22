@@ -37,6 +37,7 @@ export default async function LeadPage({ params, searchParams }: {
   const repairs = Number(lead.est_repairs) || 0;
   const mao70 = arv ? arv * 0.7 - repairs : null;
   const step = Math.min(lead.follow_up_step, 6);
+  const analysis = (lead.analysis ?? null) as { mao?: number; verdict?: string | null; arv?: number; repairs?: number; mao_pct?: number; fee?: number; price?: number | null; analyzed_at?: string; analyzed_by?: string } | null;
   const back = `/crm/leads/${id}`;
   const canDeal = profile.role !== "va" && !["Under contract", "Closed"].includes(lead.status) && (deals.data ?? []).length === 0;
 
@@ -88,14 +89,35 @@ export default async function LeadPage({ params, searchParams }: {
 
           {profile.role !== "va" && (
             <section className="card p-4 text-sm">
-              <h2 className="font-semibold">Quick numbers</h2>
-              <dl className="mt-2 grid grid-cols-2 gap-y-1">
-                <dt className="text-ink-soft">ARV</dt><dd className="text-right">{money(lead.est_arv)}</dd>
-                <dt className="text-ink-soft">Repairs</dt><dd className="text-right">{money(lead.est_repairs)}</dd>
-                <dt className="text-ink-soft">Asking</dt><dd className="text-right">{money(lead.asking_price)}</dd>
-                <dt className="font-semibold">70% − repairs</dt><dd className="text-right font-semibold">{money(mao70)}</dd>
-              </dl>
-              <p className="hint">Subtract your fee for MAO. The full Deal Analyzer arrives in Phase 2.</p>
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold">Deal numbers</h2>
+                {profile.role !== "dispositions" && <Link href={`/crm/analyzer?lead=${id}`} className="btn btn-dark btn-sm">Analyze</Link>}
+              </div>
+              {analysis?.mao != null ? (
+                <>
+                  <div className={`mt-3 flex items-center justify-between rounded-lg p-3 text-white ${analysis.verdict === "PASS" ? "bg-danger" : analysis.verdict === "GO" ? "bg-sage" : "bg-ink"}`}>
+                    <span><span className="block text-xs opacity-80">MAO</span><span className="h-display text-2xl font-semibold">{money(analysis.mao)}</span></span>
+                    {analysis.verdict && <span className="h-display text-2xl font-bold">{analysis.verdict}</span>}
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-y-1">
+                    <dt className="text-ink-soft">ARV</dt><dd className="text-right">{money(analysis.arv)}</dd>
+                    <dt className="text-ink-soft">Repairs</dt><dd className="text-right">{money(analysis.repairs)}</dd>
+                    <dt className="text-ink-soft">MAO % · fee</dt><dd className="text-right">{analysis.mao_pct}% · {money(analysis.fee)}</dd>
+                    <dt className="text-ink-soft">Price tested</dt><dd className="text-right">{money(analysis.price)}</dd>
+                  </dl>
+                  <p className="hint">Analyzed {dateTime(analysis.analyzed_at)}{analysis.analyzed_by ? ` by ${analysis.analyzed_by}` : ""}</p>
+                </>
+              ) : (
+                <>
+                  <dl className="mt-2 grid grid-cols-2 gap-y-1">
+                    <dt className="text-ink-soft">ARV</dt><dd className="text-right">{money(lead.est_arv)}</dd>
+                    <dt className="text-ink-soft">Repairs</dt><dd className="text-right">{money(lead.est_repairs)}</dd>
+                    <dt className="text-ink-soft">Asking</dt><dd className="text-right">{money(lead.asking_price)}</dd>
+                    <dt className="font-semibold">70% − repairs</dt><dd className="text-right font-semibold">{money(mao70)}</dd>
+                  </dl>
+                  <p className="hint">Run the Deal Analyzer for MAO and a GO/PASS verdict.</p>
+                </>
+              )}
             </section>
           )}
 

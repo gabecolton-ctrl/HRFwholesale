@@ -43,8 +43,8 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
             <div className="absolute right-0 mt-2 w-56 rounded-xl border border-line bg-white p-2 shadow-lg">
               <p className="px-3 pt-2 text-sm font-semibold">{profile.full_name ?? profile.email}</p>
               <p className="px-3 pb-2 text-xs text-ink-soft">{ROLE_LABELS[profile.role]}</p>
-              {items.filter((k) => ["import", "export", "team"].includes(k)).map((k) => (
-                <Link key={k} href={`/crm/${k}`} className="block rounded-lg px-3 py-2 text-sm capitalize hover:bg-paper">{k}</Link>
+              {items.filter((k) => ["dashboard", "analyzer", "import", "export", "team", "settings"].includes(k)).map((k) => (
+                <Link key={k} href={`/crm/${k}`} className="block rounded-lg px-3 py-2 text-sm hover:bg-paper">{{ dashboard: "Dashboard", analyzer: "Deal Analyzer", import: "Import", export: "Export", team: "Team", settings: "Settings" }[k]}</Link>
               ))}
               <form action="/auth/signout" method="post"><button className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-paper">Sign out</button></form>
             </div>

@@ -9,6 +9,11 @@ const TABLES: Record<string, { table: string; order: string }> = {
   deals: { table: "deals", order: "created_at" },
   "consent-records": { table: "consent_records", order: "created_at" },
   team: { table: "profiles", order: "created_at" },
+  "buyer-offers": { table: "deal_offers", order: "created_at" },
+  "buyer-acknowledgments": { table: "deal_acknowledgments", order: "created_at" },
+  "deal-alerts": { table: "deal_alerts", order: "created_at" },
+  "monthly-targets": { table: "monthly_targets", order: "month" },
+  "marketing-spend": { table: "marketing_spend", order: "month" },
 };
 
 // Owner-only full CSV export of any table. Reads in pages of 1,000 rows.

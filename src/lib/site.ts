@@ -11,6 +11,10 @@ export const site = {
   serviceArea: "Dallas, Collin, Tarrant, Denton and Ellis counties",
   hours: "Mon–Sat, 8am–7pm",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://hrfwholesale.com",
+  // Required by law (CAN-SPAM) at the bottom of every deal alert email.
+  // A P.O. box or registered mailbox is fine. TODO: put your business mailing address.
+  mailingAddress: "H.R.F Assets LLC, Dallas, TX",
+  dealsEmail: "deals@hrfassets.com",
 };
 
 // Shown next to the required checkbox on the Sell form. The exact text,

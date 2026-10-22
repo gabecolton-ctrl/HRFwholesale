@@ -7,10 +7,12 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { dealFormOptions } from "../options";
 import { dateTime } from "@/lib/format";
 import { deleteDeal } from "../actions";
+import { DealPhotos } from "@/components/crm/DealPhotos";
+import { AlertsPanel, OffersPanel } from "@/components/crm/DealListingPanels";
 
 export const metadata = { title: "Deal" };
 
-export default async function DealPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
+export default async function DealPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string; alerted?: string; alertnote?: string }> }) {
   const { supabase, profile } = await requireRole("owner", "acquisitions", "dispositions");
   const { id } = await params;
   const sp = await searchParams;
@@ -28,7 +30,16 @@ export default async function DealPage({ params, searchParams }: { params: Promi
       />
       {sp.saved && <Notice>Saved.</Notice>}
       {sp.error && <Notice tone="danger">{sp.error}</Notice>}
-      <DealForm deal={deal} role={profile.role} buyers={opts.buyers} reps={opts.reps} />
+      {sp.alerted && <Notice>Deal alert emailed to {sp.alerted} matching buyer{sp.alerted === "1" ? "" : "s"}.</Notice>}
+      {sp.alertnote && <Notice tone="amber">Alerts: {sp.alertnote}</Notice>}
+      <div className="space-y-5">
+        <DealForm deal={deal} role={profile.role} buyers={opts.buyers} reps={opts.reps} />
+        <DealPhotos dealId={id} paths={deal.photo_paths ?? []} publicBase={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/deal-photos`} />
+        <OffersPanel supabase={supabase} dealId={id} role={profile.role} />
+        {(profile.role === "owner" || profile.role === "dispositions") && (
+          <AlertsPanel supabase={supabase} dealId={id} published={deal.published_to_portal} available={["Under contract", "Marketing"].includes(deal.status)} />
+        )}
+      </div>
       {profile.role === "owner" && (
         <form action={deleteDeal} className="mt-6 text-right">
           <input type="hidden" name="id" value={id} />

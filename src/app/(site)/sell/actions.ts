@@ -5,7 +5,9 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { looksLikeBot, requestMeta } from "@/lib/request-meta";
 import { SELLER_CONSENT_TEXT, SELLER_CONSENT_VERSION } from "@/lib/site";
-import { phoneDigits } from "@/lib/format";
+import { phoneDigits, phonePretty } from "@/lib/format";
+import { notifyTeam } from "@/lib/email";
+import { site } from "@/lib/site";
 
 export type FormState = { error?: string; fields?: Record<string, string> };
 
@@ -84,6 +86,18 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
     await db.from("leads").delete().eq("id", lead.id);
     return { error: "Something went wrong saving your request. Please call us instead.", fields: raw };
   }
+
+  // Speed to lead: tell the team right away (no-op until email is set up).
+  await notifyTeam(
+    `New seller lead: ${v.address}`,
+    [
+      `${v.name} · ${phonePretty(v.phone)}${v.email ? ` · ${v.email}` : ""}`,
+      `${v.address}${v.city ? `, ${v.city}` : ""} ${v.zip}`,
+      [v.condition, v.timeline].filter(Boolean).join(" · "),
+      v.reason ? `Reason: ${v.reason}` : "",
+    ].filter(Boolean),
+    `${site.url}/crm/leads/${lead.id}`,
+  );
 
   redirect("/sell/thanks");
 }

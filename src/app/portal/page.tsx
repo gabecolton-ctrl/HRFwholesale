@@ -1,86 +1,97 @@
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
-import { Logo } from "@/components/Logo";
-import { BuyBoxFields } from "@/components/BuyBoxFields";
-import { SubmitButton } from "@/components/SubmitButton";
-import { dateShort } from "@/lib/format";
-import { updateBuyBox, uploadPof } from "./actions";
+import { REHAB_LEVELS } from "@/lib/constants";
+import { money, dateShort, toNumber } from "@/lib/format";
+import { fitsBuyBox, publicPhoto, specs, where, type PortalDeal } from "@/lib/portal";
+import { ASSIGNMENT_DISCLOSURE } from "@/lib/site";
 
-export const metadata = { title: "Buyer portal", robots: { index: false } };
+export const metadata = { title: "Deals" };
 
-export default async function Portal({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
+type SP = { area?: string; max?: string; rehab?: string; mine?: string };
+
+export default async function PortalDeals({ searchParams }: { searchParams: Promise<SP> }) {
   const { supabase, profile } = await requireRole("buyer");
-  const { saved, error } = await searchParams;
-  const { data: b } = await supabase.from("cash_buyers").select("*").maybeSingle();
+  const sp = await searchParams;
+  const [{ data }, { data: me }, { data: offers }] = await Promise.all([
+    supabase.rpc("portal_deals"),
+    supabase.from("cash_buyers").select("areas,price_min,price_max,rehab_levels,property_types,pof_path,pof_verified,status").maybeSingle(),
+    supabase.rpc("portal_my_offers"),
+  ]);
+  const all = (data ?? []) as PortalDeal[];
+  const max = toNumber(sp.max ?? null);
+  const term = (sp.area ?? "").trim().toLowerCase();
+  const deals = all.filter((d) => {
+    if (term && ![d.area, d.city, d.zip].some((x) => (x ?? "").toLowerCase().includes(term))) return false;
+    if (max !== null && d.list_price !== null && d.list_price > max) return false;
+    if (sp.rehab && d.rehab_level !== sp.rehab) return false;
+    if (sp.mine === "1" && !fitsBuyBox(d, me)) return false;
+    return true;
+  });
 
   return (
-    <div className="min-h-dvh">
-      <header className="border-b border-line bg-white">
-        <div className="container-x flex h-16 items-center justify-between">
-          <Logo href="/portal" />
-          <form action="/auth/signout" method="post"><button className="btn btn-ghost btn-sm">Sign out</button></form>
-        </div>
-      </header>
-      <main className="container-x max-w-3xl space-y-6 py-8">
+    <>
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="h-display text-3xl font-semibold">Welcome, {profile.full_name?.split(" ")[0] ?? "investor"}</h1>
-          <p className="mt-1 text-ink-soft">Your buyer account with H.R.F Assets LLC.</p>
+          <h1 className="h-display text-3xl font-semibold">Deals</h1>
+          <p className="mt-1 text-ink-soft">Off-market properties H.R.F Assets LLC has under contract. Hi {profile.full_name?.split(" ")[0] ?? "there"}.</p>
         </div>
-        {saved && <p className="rounded-lg bg-sage/10 px-4 py-3 text-sm font-medium text-sage">Saved.</p>}
-        {error && <p className="rounded-lg bg-danger/5 px-4 py-3 text-sm font-medium text-danger">{error}</p>}
+        {(offers ?? []).length > 0 && <p className="text-sm text-ink-soft">You've sent {(offers ?? []).length} offer{(offers ?? []).length === 1 ? "" : "s"} or inquiries.</p>}
+      </div>
 
-        <section className="card p-6">
-          <h2 className="h-display text-xl font-semibold">Deals</h2>
-          <p className="mt-2 text-ink-soft">
-            Deal listings are opening soon. When we have a property under contract that matches your buy box, you'll get an
-            email with the details.
-          </p>
-        </section>
+      {me?.status === "Inactive" && <p className="mb-4 rounded-lg bg-amber/10 p-3 text-sm text-amber">Your buyer account is inactive. Contact us to reactivate it.</p>}
+      {me && !me.pof_path && (
+        <p className="mb-4 rounded-lg bg-amber/10 p-3 text-sm">
+          <strong>Add your proof of funds</strong> so we can move fast when you make an offer. <Link href="/portal/account" className="font-semibold underline">Upload it</Link>
+        </p>
+      )}
 
-        {!b ? (
-          <section className="card p-6">
-            <p>We couldn't find your buyer profile. Please <Link className="underline" href="/contact">contact us</Link>.</p>
-          </section>
-        ) : (
-          <>
-            <section className="card p-6">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h2 className="h-display text-xl font-semibold">Proof of funds</h2>
-                {b.pof_verified ? (
-                  <span className="pill bg-sage/15 text-sage">Verified</span>
-                ) : b.pof_path ? (
-                  <span className="pill bg-amber/15 text-amber">Under review</span>
-                ) : (
-                  <span className="pill bg-danger/10 text-danger">Missing</span>
-                )}
-              </div>
-              {b.pof_uploaded_at && <p className="mt-1 text-sm text-ink-soft">Last uploaded {dateShort(b.pof_uploaded_at)}</p>}
-              <form action={uploadPof} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                <input name="pof" type="file" required accept="application/pdf,image/jpeg,image/png,image/heic,image/webp"
-                  className="block w-full text-sm file:mr-3 file:min-h-11 file:rounded-lg file:border-0 file:bg-ink file:px-4 file:font-semibold file:text-white" />
-                <SubmitButton className="btn btn-dark shrink-0" pendingText="Uploading…">Upload</SubmitButton>
-              </form>
-              <p className="hint">PDF or photo, up to 4 MB.</p>
-            </section>
+      <form className="card mb-5 grid gap-3 p-3 sm:grid-cols-[1.5fr_1fr_1fr_auto_auto] sm:items-center">
+        <input name="area" defaultValue={sp.area} className="input" placeholder="Area, city or ZIP" aria-label="Area" />
+        <input name="max" defaultValue={sp.max} className="input" inputMode="numeric" placeholder="Max price" aria-label="Max price" />
+        <select name="rehab" defaultValue={sp.rehab ?? ""} className="input" aria-label="Rehab level">
+          <option value="">Any rehab</option>
+          {REHAB_LEVELS.map((r) => <option key={r}>{r}</option>)}
+        </select>
+        <label className="flex items-center gap-2 text-sm whitespace-nowrap"><input type="checkbox" name="mine" value="1" defaultChecked={sp.mine === "1"} className="check mt-0" /> Fits my buy box</label>
+        <button className="btn btn-dark btn-sm">Filter</button>
+      </form>
 
-            <form action={updateBuyBox} className="card space-y-5 p-6">
-              <h2 className="h-display text-xl font-semibold">Your details & buy box</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div><label className="label" htmlFor="name">Name</label><input id="name" name="name" className="input" defaultValue={b.name} required /></div>
-                <div><label className="label" htmlFor="company">Company</label><input id="company" name="company" className="input" defaultValue={b.company ?? ""} /></div>
-                <div><label className="label" htmlFor="phone">Phone</label><input id="phone" name="phone" type="tel" className="input" defaultValue={b.phone ?? ""} /></div>
-                <div><label className="label">Email</label><input className="input bg-paper" value={b.email ?? ""} readOnly /></div>
-              </div>
-              <BuyBoxFields d={b} />
-              <label className="flex gap-3 text-sm"><input type="checkbox" name="email_alerts" defaultChecked={b.email_alerts} className="check" /> Email me deals that match my buy box</label>
-              {b.sms_consent && (
-                <label className="flex gap-3 text-sm"><input type="checkbox" name="sms_off" className="check" /> Stop calls and texts about deals</label>
-              )}
-              <SubmitButton className="btn btn-primary">Save changes</SubmitButton>
-            </form>
-          </>
-        )}
-      </main>
-    </div>
+      {deals.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-line bg-white px-6 py-12 text-center">
+          <p className="font-semibold">{all.length === 0 ? "No deals available right now" : "No deals match these filters"}</p>
+          <p className="mt-1 text-sm text-ink-soft">We'll email you when a new deal fits your buy box. <Link href="/portal/account" className="underline">Check your buy box</Link>.</p>
+        </div>
+      ) : (
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {deals.map((d) => (
+            <li key={d.id}>
+              <Link href={`/portal/deals/${d.id}`} className="card block overflow-hidden hover:border-ink-soft">
+                <div className="relative aspect-[4/3] bg-paper">
+                  {d.photo_paths[0] ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={publicPhoto(d.photo_paths[0])} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-ink-soft">Photos coming soon</div>
+                  )}
+                  <span className={`pill absolute top-2 left-2 ${d.status === "Available" ? "bg-sage text-white" : "bg-ink text-white"}`}>{d.status}</span>
+                  {fitsBuyBox(d, me) && <span className="pill absolute top-2 right-2 bg-clay text-white">Fits your buy box</span>}
+                </div>
+                <div className="p-4">
+                  <p className="text-xs font-semibold tracking-wide text-ink-soft uppercase">{where(d)}</p>
+                  <p className="h-display mt-1 text-2xl font-semibold">{money(d.list_price)}</p>
+                  <p className="text-sm text-ink-soft">{[d.property_type, specs(d)].filter(Boolean).join(" · ")}</p>
+                  <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                    <div><dt className="text-xs text-ink-soft">ARV</dt><dd className="font-semibold">{money(d.arv)}</dd></div>
+                    <div><dt className="text-xs text-ink-soft">Repairs</dt><dd className="font-semibold">{money(d.repair_estimate)}</dd></div>
+                    <div><dt className="text-xs text-ink-soft">Close by</dt><dd className="font-semibold">{dateShort(d.closing_date)}</dd></div>
+                  </dl>
+                  <p className="mt-3 border-t border-line pt-2 text-[11px] leading-snug text-ink-soft">{ASSIGNMENT_DISCLOSURE}</p>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </>
   );
 }

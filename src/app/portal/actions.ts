@@ -27,24 +27,24 @@ export async function updateBuyBox(fd: FormData) {
       ...(fd.get("sms_off") === "on" ? { sms_consent: false } : {}),
     })
     .eq("user_id", user.id);
-  if (error) redirect("/portal?error=" + encodeURIComponent(error.message));
-  revalidatePath("/portal");
-  redirect("/portal?saved=1");
+  if (error) redirect("/portal/account?error=" + encodeURIComponent(error.message));
+  revalidatePath("/portal/account");
+  redirect("/portal/account?saved=1");
 }
 
 export async function uploadPof(fd: FormData) {
   const { supabase, user } = await requireRole("buyer");
   const file = fd.get("pof") as File | null;
   const err = checkUpload(file);
-  if (err || !file || file.size === 0) redirect("/portal?error=" + encodeURIComponent(err ?? "Choose a file first"));
+  if (err || !file || file.size === 0) redirect("/portal/account?error=" + encodeURIComponent(err ?? "Choose a file first"));
   // RLS check: the buyer must own a buyer record.
   const { data: row } = await supabase.from("cash_buyers").select("id").eq("user_id", user.id).single();
-  if (!row) redirect("/portal?error=No+buyer+profile");
+  if (!row) redirect("/portal/account?error=No+buyer+profile");
   const path = await uploadPrivate("proof-of-funds", user.id, file);
   await createAdminClient()
     .from("cash_buyers")
     .update({ pof_path: path, pof_uploaded_at: new Date().toISOString(), pof_verified: false })
     .eq("id", row.id);
-  revalidatePath("/portal");
-  redirect("/portal?saved=1");
+  revalidatePath("/portal/account");
+  redirect("/portal/account?saved=1");
 }

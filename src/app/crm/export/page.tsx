@@ -9,6 +9,11 @@ const items = [
   ["buyers", "Cash buyers", "Contacts and buy boxes."],
   ["deals", "Deal pipeline", "Contracts, dates, prices, fees and disclosure status."],
   ["consent-records", "Consent records", "Proof of consent for every web lead (wording, time, IP)."],
+  ["buyer-offers", "Buyer offers", "Every interest and offer buyers sent from the portal."],
+  ["buyer-acknowledgments", "Buyer disclosure acknowledgments", "Proof each buyer saw the assignment disclosure (time, IP)."],
+  ["deal-alerts", "Deal alert log", "Who was emailed about which deal."],
+  ["monthly-targets", "Monthly targets", "Your targets by month."],
+  ["marketing-spend", "Marketing spend", "Spend by month and lead source."],
   ["team", "Team", "Logins and roles."],
 ];
 

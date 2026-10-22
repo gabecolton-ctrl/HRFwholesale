@@ -6,6 +6,7 @@ import { createDeal, updateDeal, type DealFormState } from "@/app/crm/pipeline/a
 import { SubmitButton } from "@/components/SubmitButton";
 import { DEAL_STATUSES, EXIT_STRATEGIES, PROPERTY_TYPES, REHAB_LEVELS, type AppRole } from "@/lib/constants";
 import { ASSIGNMENT_DISCLOSURE } from "@/lib/site";
+import { CompsEditor } from "@/components/crm/CompsEditor";
 
 type Deal = Record<string, unknown> & { id?: string };
 type Opt = { id: string; label: string };
@@ -30,6 +31,7 @@ export function DealForm({ deal = {}, role, buyers, reps }: { deal?: Deal; role:
   const [exit, setExit] = useState(s(deal, "exit_strategy") || "Assignment");
   const [buyer, setBuyer] = useState(s(deal, "end_buyer_id"));
   const [signedDate, setSignedDate] = useState(s(deal, "contract_signed_date"));
+  const [sqft, setSqft] = useState(s(deal, "sqft"));
 
   const math = useMemo(() => {
     const a = n(arv), r = n(rep) ?? 0, c = n(cp), x = n(ap);
@@ -58,12 +60,13 @@ export function DealForm({ deal = {}, role, buyers, reps }: { deal?: Deal; role:
         <Sel label="Property type" name="property_type" d={s(deal, "property_type")} options={PROPERTY_TYPES} />
         <F label="Beds" name="beds" d={s(deal, "beds")} />
         <F label="Baths" name="baths" d={s(deal, "baths")} />
-        <F label="Sq ft" name="sqft" d={s(deal, "sqft")} />
+        <div><label className="label" htmlFor="sqft">Sq ft</label><input id="sqft" name="sqft" className="input" inputMode="numeric" value={sqft} onChange={(e) => setSqft(e.target.value)} /></div>
         <F label="Year built" name="year_built" d={s(deal, "year_built")} />
         <Sel label="Rehab level" name="rehab_level" d={s(deal, "rehab_level")} options={REHAB_LEVELS} />
         <div><label className="label" htmlFor="arv">ARV</label><input id="arv" name="arv" className="input" inputMode="numeric" value={arv} onChange={(e) => setArv(e.target.value)} /></div>
         <div><label className="label" htmlFor="repair_estimate">Repair estimate</label><input id="repair_estimate" name="repair_estimate" className="input" inputMode="numeric" value={rep} onChange={(e) => setRep(e.target.value)} /></div>
         <div className="col-span-full"><label className="label" htmlFor="description">Description for buyers</label><textarea id="description" name="description" rows={3} className="input" defaultValue={s(deal, "description")} /></div>
+        <CompsEditor initial={deal.comps} subjectSqft={sqft} onUseArv={setArv} />
       </Card>
 
       <Card title="Contract">
@@ -127,11 +130,16 @@ export function DealForm({ deal = {}, role, buyers, reps }: { deal?: Deal; role:
             <Sel label="Dispositions" name="dispo_rep" d={s(deal, "dispo_rep")} options={reps.dispo.map((r) => [r.id, r.label] as [string, string])} />
           </>
         )}
+        <div>
+          <label className="label" htmlFor="list_price">Price shown to buyers</label>
+          <input id="list_price" name="list_price" className="input" inputMode="numeric" defaultValue={s(deal, "list_price")} placeholder="e.g. 125000" />
+          <p className="hint">Blank = uses the assignment price.</p>
+        </div>
         <label className={`col-span-full flex items-start gap-3 rounded-lg border p-3 text-sm ${canPublish ? "border-line" : "border-dashed border-line bg-paper text-ink-soft"}`}>
           <input type="checkbox" name="published_to_portal" defaultChecked={deal.published_to_portal === true} disabled={!canPublish} className="check" />
           <span>
             <strong className="block text-ink">Publish to buyer portal</strong>
-            {canPublish ? "Matching buyers will see it once the portal opens in Phase 2." : "Locked until the contract signed date is set and the seller disclosure is marked signed."}
+            {canPublish ? "Buyers see it in the portal. When you first publish, Tier A matching buyers are emailed automatically." : "Locked until the contract signed date is set and the seller disclosure is marked signed."}
           </span>
         </label>
         <div className="col-span-full"><label className="label" htmlFor="notes">Notes</label><textarea id="notes" name="notes" rows={3} className="input" defaultValue={s(deal, "notes")} /></div>

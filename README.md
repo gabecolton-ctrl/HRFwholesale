@@ -1,10 +1,11 @@
 # hrfwholesale.com — H.R.F Assets LLC
 
-Seller lead site + cash buyer sign-up + private CRM. **Phase 1.**
+Seller lead site + cash buyer sign-up + buyer deal portal + private CRM. **Phases 1–2.**
 
 - **Public:** Home, Get a Cash Offer form (with TCPA consent proof), Investor sign-up (buy box + proof of funds), About, Contact, Privacy, Terms
-- **Buyer portal:** buyers edit their buy box and upload proof of funds (deal listings come in Phase 2)
-- **CRM (`/crm`):** Today, Follow-ups (overdue / due today / next 7 days), Leads, Cash Buyers (segment filters), Deal Pipeline (disclosure locks), CSV Import, CSV Export, Team
+- **Buyer portal (`/portal`):** deal listings with photos, comps and the built-in assignment disclosure; buyers acknowledge the disclosure before the address unlocks, then send interest or offers; buy box and proof of funds under My account
+- **Deal alerts:** matching buyers are emailed when a deal is published (Tier A first), with one-click unsubscribe
+- **CRM (`/crm`):** Today, Dashboard (weekly KPIs, targets vs. actual, cost per contract), Follow-ups, Leads, Deal Analyzer (MAO + GO/PASS), Cash Buyers, Deal Pipeline (disclosure locks, photos, comps, buyer offers, alerts), CSV Import/Export, Team, Settings
 
 Built with Next.js 15 + Supabase (database, logins, private file storage), hosted on Vercel, code on GitHub.
 
@@ -96,6 +97,45 @@ Free Supabase projects pause after a week without activity. Switch to **Pro** be
 
 ---
 
+## Phase 2 setup (after Phase 1 is live)
+
+### A. Update the database (2 minutes)
+In Supabase → **SQL Editor → New query**, paste **all** of `supabase/migrations/0002_phase2.sql` and click **Run**. You should see "Success". (Safe to run again.)
+
+### B. Turn on email with Resend (15 minutes, free tier)
+Resend sends deal alerts, new-lead and new-offer notices, and (via SMTP) Supabase's sign-up and invite emails.
+
+1. Sign up at **resend.com**. Go to **Domains → Add Domain** → `hrfassets.com`.
+2. Resend shows a few DNS records (TXT/MX/CNAME). Add them wherever **hrfassets.com's** DNS is managed (Namecheap → Advanced DNS if it's there). Wait for **Verified**.
+3. **API Keys → Create API Key** (Sending access). Copy it.
+4. In Vercel → **Settings → Environment Variables**, add:
+
+   | Name | Type | Value |
+   |---|---|---|
+   | `RESEND_API_KEY` | Secret | the key from step 3 |
+   | `EMAIL_FROM` | Config | `H.R.F Assets LLC <notifications@hrfassets.com>` |
+   | `NOTIFY_EMAIL` | Config | where new leads/offers go, e.g. `offers@hrfassets.com` (comma-separate several) |
+
+   Then redeploy (push any change, or Deployments → Create Deployment → `main`).
+5. **Supabase emails through Resend:** Supabase → **Authentication → Emails → SMTP Settings** → enable custom SMTP:
+   Host `smtp.resend.com`, Port `465`, Username `resend`, Password = your Resend API key,
+   Sender email `notifications@hrfassets.com`, Sender name `H.R.F Assets LLC`.
+
+### C. Your mailing address (required in marketing emails)
+Deal alert emails must show a physical mailing address (CAN-SPAM). Edit `mailingAddress` in `src/lib/site.ts` — a P.O. box or registered mailbox works.
+
+### D. Set targets and spend
+CRM → **Settings**: check the Deal Analyzer defaults, click **Fill 12 months from playbook** with your Month 1, and enter monthly marketing spend per lead source. The Dashboard uses these.
+
+### How listings and alerts work
+1. Deal under contract → add **photos**, **comps**, **price shown to buyers** and a description on the deal page.
+2. Mark the **seller disclosure signed** → tick **Publish to buyer portal** → Save. Tier A matching buyers are emailed automatically.
+3. Use **Email everyone else** on the deal page when you're ready for the full list.
+4. Buyers see area, numbers, photos and comps. The **street address unlocks only after they acknowledge the disclosure** (time and IP are recorded). Their interest/offers show under **Buyer interest & offers**, and you get an email.
+5. Pick a buyer → set them as End buyer, collect EMD, get the buyer disclosure signed → **Buyer assigned**. The portal shows the deal as Pending.
+
+Matching uses each buyer's areas/ZIPs, price range, rehab levels and property types (blank = any). Each buyer gets at most one alert per deal. Inactive or unsubscribed buyers are never emailed.
+
 ## Before you take real leads
 
 - [ ] **Attorney review:** the consent wording (`src/lib/site.ts`), Privacy Policy, Terms, and your seller and buyer disclosure documents.
@@ -132,8 +172,7 @@ CRM → **Import**. In Excel, save the *Lead Tracker* or *Cash Buyers* tab as CS
 
 ## What comes next
 
-- **Phase 2:** buyer portal deal listings (photos, comps, built-in disclosure, acknowledge-before-address), email alerts to matching buyers, Deal Analyzer, KPI dashboard
-- **Phase 3:** Rental Analyzer, Portfolio with balloon alerts, SMS/email integrations, instant new-lead notifications
+- **Phase 3:** Rental Analyzer, Portfolio with balloon alerts, texting and calling inside the CRM (Telnyx), team-role polish
 - **Worth adding early:** a CAPTCHA on the public forms if spam shows up (bots are currently filtered by a hidden field and a minimum fill time)
 
 ## For developers
@@ -146,4 +185,4 @@ npm run build                # production build
 npm run test:db              # database rule tests (needs a local Postgres 16)
 ```
 
-Schema and rules: `supabase/migrations/0001_phase1.sql`. Tests: `supabase/tests/rules_test.sql`.
+Schema and rules: `supabase/migrations/0001_phase1.sql`, `0002_phase2.sql`. Tests: `supabase/tests/rules_test.sql`, `phase2_test.sql`.
