@@ -4,8 +4,8 @@ export const site = {
   legalName: "H.R.F Assets LLC",
   brand: "H.R.F Assets",
   tagline: "Local cash home buyers in Dallas–Fort Worth",
-  phone: "(214) 555-0123", // TODO: your business line (Google Voice is fine)
-  phoneHref: "tel:+12145550123",
+  phone: "(469) 224-3258",
+  phoneHref: "tel:+14692243258",
   email: "offers@hrfwholesale.com", // TODO: your business email
   city: "Dallas, TX",
   serviceArea: "Dallas, Collin, Tarrant, Denton and Ellis counties",
