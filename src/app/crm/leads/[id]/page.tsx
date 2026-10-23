@@ -50,6 +50,12 @@ export default async function LeadPage({ params, searchParams }: {
         actions={canDeal ? <Link href={`/crm/pipeline/new?lead=${id}`} className="btn btn-primary btn-sm">Put under contract</Link> : undefined}
       />
       {sp.saved && <Notice>Saved.</Notice>}
+      {["Closed", "Dead"].includes(lead.status) && (
+        <p className="mb-4 rounded-lg bg-paper px-4 py-3 text-sm text-ink-soft ring-1 ring-line">
+          This lead is <strong className="text-ink">{lead.status}</strong>, so it's off your follow-up list and the Open leads view.
+          Find it anytime under <Link href={`/crm/leads?status=${lead.status}`} className="font-semibold text-ink underline">Leads → {lead.status}</Link>.
+        </p>
+      )}
       {sp.logged && <Notice>Follow-up logged.</Notice>}
       {sp.error && <Notice tone="danger">{sp.error}</Notice>}
 

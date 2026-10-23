@@ -17,7 +17,9 @@ export default async function Leads({ searchParams }: { searchParams: Promise<SP
   let q = supabase
     .from("leads")
     .select("id,seller_name,phone,address,city,state,zip,status,motivation,lead_source,next_follow_up,keep_candidate,do_not_call,created_at", { count: "exact" });
-  if (sp.status) q = q.eq("status", sp.status);
+  if (sp.status === "all") {
+    /* every lead */
+  } else if (sp.status) q = q.eq("status", sp.status);
   else q = q.not("status", "in", "(Closed,Dead)");
   if (sp.source) q = q.eq("lead_source", sp.source);
   if (sp.keep === "1") q = q.eq("keep_candidate", true);
@@ -43,19 +45,37 @@ export default async function Leads({ searchParams }: { searchParams: Promise<SP
     <>
       <PageHeader
         title="Leads"
-        sub={`${count ?? 0} ${sp.status ? sp.status.toLowerCase() : "open"} leads`}
+        sub={`${count ?? 0} ${sp.status === "all" ? "total" : sp.status ? sp.status.toLowerCase() : "open"} leads`}
         actions={<>
           {profile.role === "owner" && <Link href="/crm/import" className="btn btn-ghost btn-sm">Import CSV</Link>}
           <Link href="/crm/leads/new" className="btn btn-primary btn-sm">Add lead</Link>
         </>}
       />
       {sp.deleted && <Notice>Lead deleted.</Notice>}
+
+      <div className="mb-3 flex flex-wrap gap-2" role="tablist" aria-label="Lead view">
+        {[
+          ["", "Open"],
+          ["Closed", "Closed"],
+          ["Dead", "Dead"],
+          ["all", "All leads"],
+        ].map(([val, label]) => {
+          const active = (sp.status ?? "") === val;
+          return (
+            <Link key={label} role="tab" aria-selected={active} href={`/crm/leads${qs({ ...base, page: undefined }, { status: val || null })}`}
+              className={`btn btn-sm ${active ? "btn-dark" : "btn-ghost"}`}>
+              {label}
+            </Link>
+          );
+        })}
+      </div>
       {error && <Notice tone="danger">{error.message}</Notice>}
 
       <form className="card mb-4 grid gap-3 p-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
         <input name="q" defaultValue={sp.q} className="input" placeholder="Search name, address, phone, ZIP" aria-label="Search" />
         <select name="status" defaultValue={sp.status ?? ""} className="input" aria-label="Status">
           <option value="">Open (not closed/dead)</option>
+          <option value="all">All leads</option>
           {LEAD_STATUSES.map((s) => <option key={s}>{s}</option>)}
         </select>
         <select name="source" defaultValue={sp.source ?? ""} className="input" aria-label="Source">
