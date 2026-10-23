@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function Logo({ href = "/", light = false }: { href?: string; light?: boolean }) {
+export function Logo({ href = "/", light = false, tagline = "Cash home buyers · Nationwide" }: { href?: string; light?: boolean; tagline?: string }) {
   return (
     <Link href={href} className="flex items-center gap-2.5" aria-label="H.R.F Assets LLC home">
       <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden="true">
@@ -12,7 +12,7 @@ export function Logo({ href = "/", light = false }: { href?: string; light?: boo
       <span className={`leading-tight ${light ? "text-white" : "text-ink"}`}>
         <span className="h-display block text-base font-semibold whitespace-nowrap sm:text-lg">H.R.F Assets LLC</span>
         <span className={`block text-[11px] font-medium tracking-wide uppercase ${light ? "text-white/70" : "text-ink-soft"}`}>
-          Cash home buyers · Nationwide
+          {tagline}
         </span>
       </span>
     </Link>

@@ -22,7 +22,7 @@ export default function BuyersPage() {
           <li>• Every deal clearly disclosed: we assign our purchase contract and do not hold title</li>
         </ul>
       </div>
-      <BuyerForm />
+      <div id="join" className="scroll-mt-20"><BuyerForm /></div>
     </section>
   );
 }

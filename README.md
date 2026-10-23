@@ -136,6 +136,19 @@ CRM → **Settings**: check the Deal Analyzer defaults, click **Fill 12 months f
 
 Matching uses each buyer's areas/ZIPs, price range, rehab levels and property types (blank = any). Each buyer gets at most one alert per deal. Inactive or unsubscribed buyers are never emailed.
 
+## Two domains: hrfassets.com (sellers) + hrfwholesale.com (investors & CRM)
+
+- **hrfassets.com** shows the seller site: home, Get a cash offer, About, Contact.
+- **hrfwholesale.com** shows the investor homepage (join the buyers list), the buyer portal, the CRM and all logins.
+- Seller pages opened on hrfwholesale.com forward to hrfassets.com, and portal/CRM/login pages opened on hrfassets.com forward to hrfwholesale.com. Privacy and Terms work on both.
+
+To turn it on:
+1. Vercel → Settings → Domains → add `hrfassets.com` (and `www`), set the A/CNAME records at your DNS host (leave MX/TXT email records alone), wait for **Valid Configuration**.
+2. Vercel → Environment Variables → add `NEXT_PUBLIC_SELLER_URL` = `https://hrfassets.com` (Config, Production), then redeploy.
+3. Keep Supabase's Site URL as `https://hrfwholesale.com` (logins live there).
+
+Until step 2, one domain serves everything, exactly as before.
+
 ## Before you take real leads
 
 - [ ] **Attorney review:** the consent wording (`src/lib/site.ts`), Privacy Policy, Terms, and your seller and buyer disclosure documents.

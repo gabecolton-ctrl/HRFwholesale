@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 import { AuthHashForwarder } from "@/components/AuthHashForwarder";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(site.url),
+  metadataBase: new URL(site.sellerUrl ?? site.url),
   title: { default: `Sell Your House Fast for Cash, Nationwide | ${site.brand}`, template: `%s | ${site.brand}` },
   description:
     "Get a fair cash offer for your house, anywhere in the U.S. No repairs, no cleaning, no agent fees. Close on your timeline.",

@@ -10,7 +10,11 @@ export const site = {
   city: "Dallas, TX", // headquarters
   serviceArea: "cities, suburbs and rural areas across the United States",
   hours: "Mon–Sat, 8am–7pm CT",
+  // Investor + back-office address: buyer sign-up, buyer portal, CRM, logins, email links.
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://hrfwholesale.com",
+  // Seller-facing address. Leave NEXT_PUBLIC_SELLER_URL unset until that domain shows
+  // "Valid Configuration" in Vercel; until then one domain serves everything.
+  sellerUrl: process.env.NEXT_PUBLIC_SELLER_URL || null,
   // Required by law (CAN-SPAM) at the bottom of every deal alert email.
   // A P.O. box or registered mailbox is fine. TODO: put your business mailing address.
   mailingAddress: "H.R.F Assets LLC, Dallas, TX",
@@ -37,3 +41,8 @@ export const BUYER_CONSENT_TEXT =
 // Built into every buyer-facing deal. Cannot be edited from the CRM.
 export const ASSIGNMENT_DISCLOSURE =
   "H.R.F Assets LLC is assigning its equitable interest in a contract to purchase this property and does not hold legal title.";
+
+/** Link to a seller page (on the seller domain once it's live). */
+export const sellerHref = (path: string) => (site.sellerUrl ? `${site.sellerUrl.replace(/\/$/, "")}${path}` : path);
+/** Link to an investor/app page (on the app domain once the seller domain is live). */
+export const appHref = (path: string) => (site.sellerUrl ? `${site.url.replace(/\/$/, "")}${path}` : path);
