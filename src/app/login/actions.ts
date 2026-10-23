@@ -41,6 +41,6 @@ export async function sendReset(_prev: LoginState, fd: FormData): Promise<LoginS
   const email = String(fd.get("email") ?? "").trim();
   if (!email) return { error: "Enter your email first, then tap “Forgot password”." };
   const supabase = await createClient();
-  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${site.url}/auth/confirm?next=/reset-password` });
+  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${site.url}/auth/accept?next=/reset-password` });
   return { notice: "If that email has an account, a reset link is on its way.", email };
 }

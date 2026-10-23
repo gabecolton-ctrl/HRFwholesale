@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { site } from "@/lib/site";
+import { AuthHashForwarder } from "@/components/AuthHashForwarder";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
@@ -24,7 +25,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap"
         />
       </head>
-      <body className="min-h-dvh antialiased">{children}</body>
+      <body className="min-h-dvh antialiased">
+        <AuthHashForwarder />
+        {children}
+      </body>
     </html>
   );
 }

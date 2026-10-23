@@ -17,7 +17,7 @@ export async function inviteMember(fd: FormData) {
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(email, {
     data: { full_name: name },
-    redirectTo: `${site.url}/auth/confirm?next=/reset-password`,
+    redirectTo: `${site.url}/auth/accept?next=/reset-password`,
   });
   if (error || !data.user) redirect(`/crm/team?error=${encodeURIComponent(error?.message ?? "Invite failed")}`);
   await admin.from("profiles").update({ role, full_name: name || null }).eq("id", data.user.id);

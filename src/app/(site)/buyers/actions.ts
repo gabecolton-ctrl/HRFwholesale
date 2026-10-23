@@ -53,7 +53,7 @@ export async function signUpBuyer(_prev: BuyerFormState, fd: FormData): Promise<
     password: v.password,
     options: {
       data: { full_name: v.name },
-      emailRedirectTo: `${site.url}/auth/confirm?next=/portal`,
+      emailRedirectTo: `${site.url}/auth/accept?next=/portal`,
     },
   });
   if (suErr) {
