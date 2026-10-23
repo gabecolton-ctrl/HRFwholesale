@@ -16,8 +16,7 @@ export const site = {
   // "Valid Configuration" in Vercel; until then one domain serves everything.
   sellerUrl: process.env.NEXT_PUBLIC_SELLER_URL || null,
   // Required by law (CAN-SPAM) at the bottom of every deal alert email.
-  // A P.O. box or registered mailbox is fine. TODO: put your business mailing address.
-  mailingAddress: "H.R.F Assets LLC, Dallas, TX",
+  mailingAddress: "H.R.F Assets LLC, P.O. Box 1440, Prosper, TX 75078",
   dealsEmail: "deals@hrfassets.com",
 };
 
