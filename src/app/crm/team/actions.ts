@@ -77,3 +77,20 @@ export async function setRole(fd: FormData) {
   revalidatePath("/crm/team");
   redirect("/crm/team?saved=1");
 }
+
+/** Permanently removes a team member's login. Their leads, notes and deals stay (unassigned). */
+export async function deleteMember(fd: FormData) {
+  const { user } = await requireRole("owner");
+  const id = String(fd.get("id"));
+  if (id === user.id) redirect("/crm/team?error=You+can't+delete+your+own+login");
+  const admin = createAdminClient();
+  const { data: p } = await admin.from("profiles").select("role,email").eq("id", id).maybeSingle();
+  if (p?.role === "owner") {
+    const { count } = await admin.from("profiles").select("id", { count: "exact", head: true }).eq("role", "owner").eq("active", true);
+    if ((count ?? 0) <= 1) redirect("/crm/team?error=Can't+delete+the+last+owner");
+  }
+  const { error } = await admin.auth.admin.deleteUser(id);
+  if (error) redirect(`/crm/team?error=${encodeURIComponent(`Couldn't delete ${p?.email ?? "user"}: ${error.message}`)}`);
+  revalidatePath("/crm/team");
+  redirect("/crm/team?deleted=1");
+}

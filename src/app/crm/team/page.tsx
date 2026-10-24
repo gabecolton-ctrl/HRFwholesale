@@ -3,14 +3,15 @@ import { Notice, PageHeader } from "@/components/crm/ui";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ROLE_LABELS, type AppRole } from "@/lib/constants";
 import { dateShort } from "@/lib/format";
-import { setRole } from "./actions";
+import { deleteMember, setRole } from "./actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { InviteForm } from "./InviteForm";
 
 export const metadata = { title: "Team" };
 
 const STAFF: AppRole[] = ["owner", "acquisitions", "dispositions", "va", "pending"];
 
-export default async function Team({ searchParams }: { searchParams: Promise<{ saved?: string; invited?: string; error?: string }> }) {
+export default async function Team({ searchParams }: { searchParams: Promise<{ saved?: string; invited?: string; error?: string; deleted?: string }> }) {
   const { supabase, user } = await requireRole("owner");
   const sp = await searchParams;
   const { data } = await supabase.from("profiles").select("id,email,full_name,role,active,created_at").neq("role", "buyer").order("created_at");
@@ -19,6 +20,7 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ s
     <>
       <PageHeader title="Team" sub="Each role only sees what it needs. The database enforces it." />
       {sp.saved && <Notice>Saved.</Notice>}
+      {sp.deleted && <Notice>Team member deleted. Their leads, notes and deals are still in the CRM.</Notice>}
       {sp.error && <Notice tone="danger">{sp.error}</Notice>}
 
       <section className="card mb-5 p-4 sm:p-5">
@@ -46,6 +48,14 @@ export default async function Team({ searchParams }: { searchParams: Promise<{ s
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={p.active} disabled={p.id === user.id} className="check mt-0" /> Active</label>
               {p.id !== user.id && <SubmitButton className="btn btn-ghost btn-sm">Save</SubmitButton>}
             </form>
+            {p.id !== user.id && (
+              <form action={deleteMember} className="mt-2 text-right">
+                <input type="hidden" name="id" value={p.id} />
+                <ConfirmButton message={`Delete ${p.full_name ?? p.email}'s login permanently? Their leads, notes and deals stay in the CRM. To just block access, untick Active instead.`} className="text-xs font-semibold text-danger underline">
+                  Delete login
+                </ConfirmButton>
+              </form>
+            )}
           </li>
         ))}
       </ul>
