@@ -1,7 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { emailConfigured, esc } from "@/lib/email";
-import { ASSIGNMENT_DISCLOSURE, site } from "@/lib/site";
+import { ASSIGNMENT_DISCLOSURE, emailLinkBase, site } from "@/lib/site";
 
 export type Match = { buyer_id: string; name: string; email: string; tier: string; unsubscribe_token: string; already_alerted: boolean };
 
@@ -43,11 +43,11 @@ export async function sendDealAlerts(dealId: string, scope: "A" | "rest") {
   const specs = [d.beds && `${d.beds} bd`, d.baths && `${d.baths} ba`, d.sqft && `${Number(d.sqft).toLocaleString()} sqft`].filter(Boolean).join(" · ");
   const price = d.list_price ?? d.assignment_price;
   const subject = `New deal: ${specs ? specs.replace(/ · .*$/, "") + " in " : ""}${where} · ${money(price)}`;
-  const link = `${site.url}/portal/deals/${d.id}`;
+  const link = `${emailLinkBase()}/portal/deals/${d.id}`;
   const photo = d.photo_paths?.[0] ? photoUrl(d.photo_paths[0]) : null;
 
   const messages = targets.map((m) => {
-    const unsub = `${site.url}/alerts/unsubscribe?t=${m.unsubscribe_token}`;
+    const unsub = `${emailLinkBase()}/alerts/unsubscribe?t=${m.unsubscribe_token}`;
     const html = `<!doctype html><html><body style="margin:0;background:#f7f4ee;font-family:Arial,Helvetica,sans-serif;color:#13283d">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" style="max-width:560px;background:#ffffff;border:1px solid #e3ddd2;border-radius:12px" cellpadding="0" cellspacing="0">
@@ -66,7 +66,7 @@ ${photo ? `<tr><td><img src="${esc(photo)}" alt="" width="560" style="display:bl
 </td></tr></table>
 <p style="max-width:560px;font-size:11px;color:#6b7280;line-height:1.5;margin:16px auto 0">
 You're getting this because ${esc(m.name)} joined the H.R.F Assets LLC buyers list and this deal matches your buy box.
-<a href="${esc(site.url)}/portal" style="color:#6b7280">Update your buy box</a> ·
+<a href="${esc(emailLinkBase())}/portal/account" style="color:#6b7280">Update your buy box</a> ·
 <a href="${esc(unsub)}" style="color:#6b7280">Unsubscribe from deal alerts</a><br>${esc(site.mailingAddress)}</p>
 </td></tr></table></body></html>`;
     const text = [

@@ -8,7 +8,7 @@ import { SELLER_CONSENT_TEXT, SELLER_CONSENT_VERSION } from "@/lib/site";
 import { phoneDigits, phonePretty } from "@/lib/format";
 import { STATE_CODES } from "@/lib/constants";
 import { notifyTeam } from "@/lib/email";
-import { site } from "@/lib/site";
+import { emailLinkBase, site } from "@/lib/site";
 
 export type FormState = { error?: string; fields?: Record<string, string> };
 
@@ -99,7 +99,7 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
       [v.condition, v.timeline].filter(Boolean).join(" · "),
       v.reason ? `Reason: ${v.reason}` : "",
     ].filter(Boolean),
-    `${site.url}/crm/leads/${lead.id}`,
+    `${emailLinkBase()}/crm/leads/${lead.id}`,
   );
 
   redirect("/sell/thanks");

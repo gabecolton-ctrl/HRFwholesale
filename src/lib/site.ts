@@ -45,3 +45,16 @@ export const ASSIGNMENT_DISCLOSURE =
 export const sellerHref = (path: string) => (site.sellerUrl ? `${site.sellerUrl.replace(/\/$/, "")}${path}` : path);
 /** Link to an investor/app page (on the app domain once the seller domain is live). */
 export const appHref = (path: string) => (site.sellerUrl ? `${site.url.replace(/\/$/, "")}${path}` : path);
+
+/**
+ * Base for links inside emails. Emails are sent from @hrfassets.com, so links use the
+ * same domain (Outlook/Gmail trust matching domains more); hrfassets.com forwards
+ * app pages (/auth, /portal, /crm, /alerts) to the app domain automatically.
+ */
+export const emailLinkBase = () => {
+  const from = process.env.EMAIL_FROM ?? "";
+  const fromDomain = from.match(/@([a-z0-9.-]+)/i)?.[1]?.toLowerCase();
+  const seller = site.sellerUrl?.replace(/\/$/, "");
+  if (seller && fromDomain && seller.toLowerCase().includes(fromDomain)) return seller;
+  return site.url.replace(/\/$/, "");
+};

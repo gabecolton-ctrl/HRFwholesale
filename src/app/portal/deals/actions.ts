@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { requestMeta } from "@/lib/request-meta";
-import { ASSIGNMENT_DISCLOSURE, site } from "@/lib/site";
+import { ASSIGNMENT_DISCLOSURE, emailLinkBase, site } from "@/lib/site";
 import { notifyTeam } from "@/lib/email";
 import { money, toNumber, toText } from "@/lib/format";
 
@@ -50,7 +50,7 @@ export async function submitInterest(fd: FormData) {
       toText(fd.get("message")) ?? "",
       me?.pof_verified ? "Proof of funds: verified" : "Proof of funds: NOT verified yet",
     ].filter(Boolean),
-    `${site.url}/crm/pipeline/${id}#offers`,
+    `${emailLinkBase()}/crm/pipeline/${id}#offers`,
   );
   revalidatePath(`/portal/deals/${id}`);
   redirect(`/portal/deals/${id}?sent=${kind}#offer`);

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { site } from "@/lib/site";
+import { emailLinkBase, site } from "@/lib/site";
 import { esc, sendEmail } from "@/lib/email";
 import { ROLE_LABELS, type AppRole } from "@/lib/constants";
 
@@ -42,18 +42,18 @@ export async function inviteMember(_prev: InviteState, fd: FormData): Promise<In
   if (prof?.role === "owner" && role !== "owner") return { error: "That person is an owner. Change their role below instead." };
   await admin.from("profiles").upsert({ id: userId, email, role, full_name: name || null, active: true }, { onConflict: "id" });
 
-  const link = `${site.url}/auth/join?token_hash=${encodeURIComponent(res.data.properties.hashed_token)}&type=${type}`;
+  const link = `${emailLinkBase()}/auth/join?token_hash=${encodeURIComponent(res.data.properties.hashed_token)}&type=${type}`;
   const first = name.split(" ")[0] || "there";
   const roleLabel = ROLE_LABELS[role as AppRole] ?? role;
   const sent = await sendEmail({
     to: email,
     subject: `You're invited to the H.R.F Assets LLC CRM`,
-    text: `Hi ${first},\n\nYou've been added to the H.R.F Assets LLC CRM as ${roleLabel}.\n\nSet your password here (the link works once):\n${link}\n\nThen sign in any time at ${site.url}/login\n`,
+    text: `Hi ${first},\n\nYou've been added to the H.R.F Assets LLC CRM as ${roleLabel}.\n\nSet your password here (the link works once):\n${link}\n\nThen sign in any time at ${emailLinkBase()}/login\n`,
     html: `<div style="font-family:Arial,sans-serif;font-size:15px;color:#13283d;max-width:520px">
 <p>Hi ${esc(first)},</p>
 <p>You've been added to the <b>H.R.F Assets LLC</b> CRM as <b>${esc(roleLabel)}</b>.</p>
 <p><a href="${esc(link)}" style="display:inline-block;background:#b4502b;color:#fff;text-decoration:none;font-weight:bold;padding:12px 20px;border-radius:8px">Set up your account</a></p>
-<p style="font-size:13px;color:#6b7280">The button works once. After that, sign in at <a href="${esc(site.url)}/login">${esc(site.url.replace(/^https?:\/\//, ""))}/login</a>.</p></div>`,
+<p style="font-size:13px;color:#6b7280">The button works once. After that, sign in at <a href="${esc(emailLinkBase())}/login">${esc(emailLinkBase().replace(/^https?:\/\//, ""))}/login</a>.</p></div>`,
   });
 
   revalidatePath("/crm/team");
