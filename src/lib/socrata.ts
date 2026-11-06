@@ -155,3 +155,28 @@ export async function pullFeed(db: SupabaseClient, feed: Feed): Promise<{ added:
     throw e;
   }
 }
+
+/** True if a complaint type passes the feed's keyword rules (same logic as the pull). */
+export function typeMatches(keywords: string[], type: string) {
+  const t = type.toLowerCase();
+  const kw = keywords.map((k) => k.trim().toLowerCase()).filter(Boolean);
+  const inc = kw.filter((k) => !k.startsWith("-"));
+  const exc = kw.filter((k) => k.startsWith("-")).map((k) => k.slice(1).trim()).filter(Boolean);
+  return (inc.length === 0 || inc.some((k) => t.includes(k))) && !exc.some((k) => t.includes(k));
+}
+
+/** Every complaint type the city logged in the last 30 days, most common first. Helps pick keywords. */
+export async function feedTypes(feed: Feed): Promise<{ type: string; n: number }[]> {
+  let f = { type: feed.field_type, date: feed.field_date };
+  if (!f.type || !f.date) {
+    const d = await detectFields(feed.domain, feed.dataset_id);
+    f = { type: f.type ?? d.type, date: f.date ?? d.date };
+  }
+  if (!f.type || !f.date) throw new Error("Couldn't find the complaint type or date column for this dataset.");
+  const since = fmtFloating(new Date(Date.now() - 30 * 86_400_000));
+  const q = new URLSearchParams({ $select: `${f.type} as t, count(*) as n`, $where: `${f.date} > '${since}'`, $group: f.type, $order: "n DESC", $limit: "300" });
+  const res = await fetch(`${base(feed.domain)}/resource/${feed.dataset_id}.json?${q}`, { headers: headers(), cache: "no-store", signal: AbortSignal.timeout(25_000) });
+  if (!res.ok) throw new Error(`The city's data portal answered ${res.status}.`);
+  const rows = (await res.json()) as { t?: string; n?: string }[];
+  return rows.filter((r) => r.t).map((r) => ({ type: String(r.t), n: Number(r.n ?? 0) }));
+}

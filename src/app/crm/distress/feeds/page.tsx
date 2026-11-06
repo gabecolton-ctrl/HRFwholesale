@@ -4,14 +4,14 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { US_STATES } from "@/lib/constants";
 import { dateTime } from "@/lib/format";
-import type { Feed } from "@/lib/socrata";
+import { feedTypes, typeMatches, type Feed } from "@/lib/socrata";
 import { addFeed, deleteFeed, pullFeedNow, updateFeed } from "../actions";
 import { DistressTabs } from "../ui";
 
 export const metadata = { title: "City feeds" };
 export const maxDuration = 60;
 
-type Params = { added?: string; saved?: string; deleted?: string; pulled?: string; scanned?: string; error?: string };
+type Params = { types?: string; added?: string; saved?: string; deleted?: string; pulled?: string; scanned?: string; error?: string };
 type Row = Feed & { active: boolean; last_count: number | null; last_error: string | null };
 
 export default async function FeedsPage({ searchParams }: { searchParams: Promise<Params> }) {
@@ -19,6 +19,18 @@ export default async function FeedsPage({ searchParams }: { searchParams: Promis
   const sp = await searchParams;
   const { data } = await supabase.from("signal_feeds").select("*").order("created_at");
   const feeds = (data ?? []) as Row[];
+
+  // "See complaint types": what the city logged in the last 30 days, so you can pick keywords.
+  let types: { type: string; n: number }[] | null = null;
+  let typesError = "";
+  const typesFeed = feeds.find((f) => f.id === sp.types);
+  if (typesFeed) {
+    try {
+      types = await feedTypes(typesFeed);
+    } catch (e) {
+      typesError = (e as Error).message;
+    }
+  }
 
   return (
     <>
@@ -29,7 +41,13 @@ export default async function FeedsPage({ searchParams }: { searchParams: Promis
       {sp.added && <Notice>Feed added. Tap “Pull now” to load the last 2 weeks.</Notice>}
       {sp.saved && <Notice>Saved.</Notice>}
       {sp.deleted && <Notice>Feed removed.</Notice>}
-      {sp.pulled && <Notice>Pulled {sp.pulled} new complaint{sp.pulled === "1" ? "" : "s"} (checked {sp.scanned ?? 0} matching records).</Notice>}
+      {sp.pulled && (
+        <Notice tone={sp.pulled === "0" ? "amber" : "sage"}>
+          Pulled {sp.pulled} new complaint{sp.pulled === "1" ? "" : "s"} ({sp.scanned ?? 0} matched your words in the last 2 weeks).
+          {sp.pulled === "0" && " Tap “See complaint types” to check which types the city actually uses, then adjust the words in Settings."}
+        </Notice>
+      )}
+      {typesError && <Notice tone="danger">{typesError}</Notice>}
 
       <div className="space-y-4">
         {feeds.map((f) => (
@@ -45,11 +63,33 @@ export default async function FeedsPage({ searchParams }: { searchParams: Promis
               </div>
               <div className="flex gap-2">
                 <form action={pullFeedNow}><input type="hidden" name="id" value={f.id} /><SubmitButton pendingText="Pulling…" className="btn btn-dark btn-sm">Pull now</SubmitButton></form>
+                <a href={sp.types === f.id ? "/crm/distress/feeds" : `/crm/distress/feeds?types=${f.id}`} className="btn btn-ghost btn-sm">{sp.types === f.id ? "Hide types" : "See complaint types"}</a>
                 <form action={deleteFeed}><input type="hidden" name="id" value={f.id} /><ConfirmButton message={`Remove ${f.name}? Complaints already in your Inbox are removed too.`} className="btn btn-ghost btn-sm">Remove</ConfirmButton></form>
               </div>
             </div>
 
-            <details className="mt-3 text-sm">
+            {sp.types === f.id && types && (
+              <div className="mt-4 rounded-lg border border-line p-3">
+                <p className="mb-2 text-sm font-semibold">Complaint types in the last 30 days ({types.length}). Green ones pass your current words.</p>
+                {types.length === 0 ? (
+                  <p className="text-sm text-ink-soft">The city logged nothing in the last 30 days. The dataset may have moved or stopped updating.</p>
+                ) : (
+                  <ul className="grid max-h-96 gap-x-4 gap-y-1 overflow-y-auto text-sm sm:grid-cols-2">
+                    {types.map((t) => {
+                      const on = typeMatches(f.keywords, t.type);
+                      return (
+                        <li key={t.type} className="flex justify-between gap-2">
+                          <span className={on ? "font-semibold text-sage" : "text-ink-soft"}>{on ? "✓ " : ""}{t.type}</span>
+                          <span className="tabular-nums text-ink-soft">{t.n.toLocaleString()}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            <details className="mt-3 text-sm" open={sp.types === f.id}>
               <summary className="cursor-pointer text-ink-soft">Settings</summary>
               <form action={updateFeed} className="mt-3 grid gap-3 sm:grid-cols-2">
                 <input type="hidden" name="id" value={f.id} />
