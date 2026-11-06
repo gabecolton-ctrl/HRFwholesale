@@ -73,7 +73,8 @@ export async function middleware(request: NextRequest) {
   headers.set("x-hrf-audience", audience);
 
   // Session handling only where logins matter.
-  if (!under(path, ["/crm", "/portal", "/api", "/login", "/auth"])) {
+  // /login and /auth handle their own sessions, so they never wait on the session check here.
+  if (!under(path, ["/crm", "/portal", "/api"])) {
     return audience === "seller" ? tag(NextResponse.next({ request: { headers } })) : NextResponse.next({ request: { headers } });
   }
 
@@ -109,10 +110,17 @@ export async function middleware(request: NextRequest) {
         },
       },
     });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (isPrivate && !user) return toLogin();
+    // Never let a slow auth server hang the whole page: give up after 5 seconds.
+    const timedOut = Symbol("timeout");
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<typeof timedOut>((r) => setTimeout(() => r(timedOut), 5000)),
+    ]);
+    if (result === timedOut) {
+      console.error("Session check timed out (Supabase slow or paused)");
+      return isPrivate ? toLogin("slow") : NextResponse.next({ request: { headers } });
+    }
+    if (isPrivate && !result.data.user) return toLogin();
     return response;
   } catch (e) {
     console.error("Session check failed", e);

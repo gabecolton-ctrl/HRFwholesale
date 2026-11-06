@@ -14,6 +14,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <p className="mb-6 text-center text-sm text-ink-soft">Team members and registered buyers.</p>
         {error === "config" ? (
           <p className="mb-4 rounded-lg bg-danger/5 px-3 py-2 text-center text-sm text-danger">Sign-in isn't connected yet: the Supabase keys are missing or wrong in Vercel.</p>
+        ) : error === "slow" ? (
+          <p className="mb-4 rounded-lg bg-danger/5 px-3 py-2 text-center text-sm text-danger">The sign-in server is slow to respond right now. Wait a minute and try again.</p>
         ) : error ? (
           <p className="mb-4 rounded-lg bg-danger/5 px-3 py-2 text-center text-sm text-danger">That link has expired. Sign in or request a new one.</p>
         ) : null}
