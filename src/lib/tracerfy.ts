@@ -149,3 +149,140 @@ export function bestPhone(d: PropertyData) {
   if (d.litigator) return null;
   return d.phones.find((p) => !p.dnc && !p.tcpa)?.number ?? null;
 }
+
+/* ───────────────────────── List builder (Lead Builder API) ───────────────────────── */
+
+export type Preset = { key: string; label: string; description: string };
+export type ListRequest = {
+  strategy: string;
+  geography: Record<string, unknown>;
+  filter_overrides: Record<string, unknown>;
+  requested_count: number;
+  name?: string;
+};
+
+async function tf<T>(path: string, init: RequestInit & { revalidate?: number } = {}): Promise<{ status: number; body: T }> {
+  const key = process.env.TRACERFY_API_KEY?.trim().replace(/^["']|["']$/g, "");
+  if (!key) throw new Error("Tracerfy isn't connected yet. Add TRACERFY_API_KEY in Vercel, then redeploy.");
+  const base = (process.env.TRACERFY_BASE_URL ?? "https://tracerfy.com/v1/api").replace(/\/$/, "");
+  const { revalidate, ...rest } = init;
+  let res: Response;
+  try {
+    res = await fetch(`${base}${path}`, {
+      ...rest,
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", Accept: "application/json", ...(rest.headers ?? {}) },
+      ...(revalidate ? { next: { revalidate } } : { cache: "no-store" as const }),
+      signal: AbortSignal.timeout(25_000),
+    });
+  } catch {
+    throw new Error("Tracerfy didn't respond. Try again in a minute.");
+  }
+  const body = (await res.json().catch(() => ({}))) as T & Record<string, unknown>;
+  if (!res.ok && res.status !== 409) {
+    const b = body as Record<string, unknown>;
+    const msg = str(b.detail || b.message || b.error) || `HTTP ${res.status}`;
+    if (res.status === 401 || res.status === 403) throw new Error(`Tracerfy rejected the API key (${msg}).`);
+    if (res.status === 402) throw new Error("Your Tracerfy account doesn't have enough credits for this list. Add credits at tracerfy.com.");
+    if (res.status === 429) throw new Error("Tracerfy's limit is 10 list builds an hour. Try again later.");
+    throw new Error(msg);
+  }
+  return { status: res.status, body };
+}
+
+/** Ready-made list strategies (high-equity absentee, tired landlord, pre-foreclosure…). Cached 1 hour. */
+export async function listPresets(): Promise<Preset[]> {
+  const { body } = await tf<unknown>("/lead-builder/filters/", { method: "GET", revalidate: 3600 });
+  const arr = Array.isArray(body) ? body : ((body as Record<string, unknown>).strategies ?? (body as Record<string, unknown>).results ?? (body as Record<string, unknown>).presets ?? []);
+  return (arr as Record<string, unknown>[])
+    .map((p) => ({ key: str(p.key), label: str(p.label) || str(p.key), description: str(p.description) }))
+    .filter((p) => p.key);
+}
+
+export async function previewList(req: ListRequest) {
+  const { body } = await tf<Record<string, unknown>>("/lead-builder/preview/", { method: "POST", body: JSON.stringify({ ...req, include_pins: false }) });
+  return {
+    total: num(body.total_matches ?? body.total_count ?? body.count) ?? 0,
+    capped: num(body.capped_count) ?? 0,
+    maxCredits: num(body.max_credit_cost) ?? 0,
+  };
+}
+
+export async function executeList(req: ListRequest) {
+  const { body } = await tf<Record<string, unknown>>("/lead-builder/execute/", { method: "POST", body: JSON.stringify(req) });
+  const id = str(body.id);
+  if (!id) throw new Error("Tracerfy didn't start the list. Try again.");
+  return { id, maxCredits: num(body.max_credit_cost) ?? 0 };
+}
+
+export async function listStatus(id: string) {
+  const { body } = await tf<Record<string, unknown>>(`/lead-builder/${encodeURIComponent(id)}/`, { method: "GET" });
+  const status = str(body.status).toLowerCase();
+  return {
+    done: status === "completed" || status === "complete" || status === "done",
+    failed: status === "failed" || status === "error",
+    progress: num(body.progress_percent),
+    stage: str(body.progress_stage),
+    count: num(body.actual_count),
+    credits: num(body.credits_deducted) ?? 0,
+    error: str(body.error || body.detail),
+  };
+}
+
+export async function listRows(id: string, page: number) {
+  const { status, body } = await tf<Record<string, unknown>>(`/lead-builder/${encodeURIComponent(id)}/rows/?page=${page}&per_page=500`, { method: "GET" });
+  if (status === 409) return { ready: false, rows: [] as Record<string, unknown>[], totalPages: 0 };
+  return { ready: true, rows: (body.rows ?? []) as Record<string, unknown>[], totalPages: num(body.total_pages) ?? 1 };
+}
+
+/** One list row → the same shape a single lookup gives us. */
+export function rowToPropertyData(r: Record<string, unknown>): PropertyData {
+  const phones: Phone[] = [];
+  const add = (prefix: string, rank: number) => {
+    const n = str(r[prefix]).replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+    if (n.length >= 10 && !phones.some((p) => p.number === n)) {
+      phones.push({ number: n, type: str(r[`${prefix}_type`]) || (prefix.startsWith("mobile") ? "Mobile" : ""), dnc: bool(r[`${prefix}_dnc`]), tcpa: bool(r[`${prefix}_tcpa`]), carrier: str(r[`${prefix}_carrier`]), rank });
+    }
+  };
+  add("primary_phone", 0);
+  for (let i = 1; i <= 10; i++) add(`mobile_${i}`, i);
+  for (let i = 1; i <= 5; i++) add(`landline_${i}`, 10 + i);
+  const owners = [1, 2]
+    .map((i) => [str(r[`owner_${i}_first_name`]), str(r[`owner_${i}_last_name`])].filter(Boolean).join(" "))
+    .filter(Boolean)
+    .map(title);
+  return {
+    hit: true,
+    fetched_at: new Date().toISOString(),
+    credits: 5,
+    owners,
+    mailing_address: [str(r.mail_address), str(r.mail_city), [str(r.mail_state), str(r.mail_zip)].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+    phones,
+    emails: [1, 2, 3].map((i) => str(r[`email_${i}`])).filter((e) => e.includes("@")),
+    litigator: bool(r.litigator),
+    property: {
+      estimated_value: num(r.estimated_value),
+      estimated_equity: num(r.estimated_equity),
+      equity_percent: num(r.equity_percent),
+      assessed_value: num(r.assessed_value),
+      open_mortgage_balance: num(r.open_mortgage_balance),
+      lender_name: str(r.lender_name),
+      estimated_mortgage_payment: num(r.estimated_mortgage_payment),
+      free_clear: bool(r.free_clear),
+      high_equity: bool(r.high_equity),
+      last_sale_date: str(r.last_sale_date).slice(0, 10),
+      last_sale_price: num(r.last_sale_price),
+      apn: str(r.apn),
+      county: str(r.county),
+      year_built: num(r.year_built),
+      beds: num(r.beds),
+      baths: num(r.baths),
+      sqft: num(r.building_size_sqft),
+      lot_sqft: num(r.lot_size_sqft),
+      absentee_owner: bool(r.absentee_owner),
+      owner_occupied: bool(r.owner_occupied),
+      vacant: bool(r.vacant),
+      pre_foreclosure: bool(r.pre_foreclosure),
+      tax_delinquent: bool(r.tax_delinquent),
+    },
+  };
+}
