@@ -42,7 +42,7 @@ export default async function AnalyzerPage({ searchParams }: { searchParams: Pro
   return (
     <>
       {lead && <p className="mb-3 text-sm"><Link href={`/crm/leads/${lead.id}`} className="text-ink-soft underline">← Back to lead</Link></p>}
-      <PageHeader title="Deal Analyzer" sub={lead ? `Analyzing ${lead.label}` : "MAO = ARV × MAO% − repairs − your fee. Price at or under MAO is a GO."} />
+      <PageHeader title="Deal Analyzer" sub={lead ? `Analyzing ${lead.label}` : "MAO = ARV × MAO% − repairs − your fee. Price at or under MAO is a GO."} actions={<Link href={lead ? `/crm/comps?lead=${lead.id}` : "/crm/comps"} className="btn btn-ghost btn-sm">Pull comps</Link>} />
       {error && <Notice tone="danger">{error}</Notice>}
       <Analyzer init={init as never} rates={rates} lead={lead} />
     </>

@@ -119,7 +119,12 @@ export default async function LeadPage({ params, searchParams }: {
             <section className="card p-4 text-sm">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold">Deal numbers</h2>
-                {profile.role !== "dispositions" && <Link href={`/crm/analyzer?lead=${id}`} className="btn btn-dark btn-sm">Analyze</Link>}
+                {profile.role !== "dispositions" && (
+                  <span className="flex gap-2">
+                    <Link href={`/crm/comps?lead=${id}`} className="btn btn-ghost btn-sm">Pull comps</Link>
+                    <Link href={`/crm/analyzer?lead=${id}`} className="btn btn-dark btn-sm">Analyze</Link>
+                  </span>
+                )}
               </div>
               {analysis?.mao != null ? (
                 <>

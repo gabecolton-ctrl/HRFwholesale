@@ -12,6 +12,7 @@ const ICONS: Record<string, React.ReactNode> = {
   export: <path d="M12 15V3m0 0L8 7m4-4 4 4M4 17v3h16v-3" />,
   team: <path d="M16 11a3 3 0 1 0 0-6M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20c0-2.8 2.7-5 6-5s6 2.2 6 5M16 15c2.8 0 6 1.5 6 5" />,
   dashboard: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  comps: <path d="M3 10.5 9 5l6 5.5V20H3zM15 10.5 19 7l3 3.5V20h-7M6.5 20v-4h5v4" />,
   analyzer: <path d="M5 3h14v18H5zM8 7h8M8 11h2M12 11h2M16 11h0M8 15h2M12 15h2M8 18h2M12 18h4" />,
   settings: <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 2.9-1.2V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />,
 };
@@ -25,6 +26,7 @@ const LABELS: Record<string, string> = {
   export: "Export",
   team: "Team",
   dashboard: "Dashboard",
+  comps: "Comps",
   analyzer: "Deal Analyzer",
   settings: "Settings",
 };

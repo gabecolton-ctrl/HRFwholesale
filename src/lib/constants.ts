@@ -115,9 +115,9 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 
 // What each staff role can open in the CRM (the database enforces the data rules).
 export const NAV_BY_ROLE: Record<AppRole, string[]> = {
-  owner: ["dashboard", "follow-ups", "leads", "analyzer", "buyers", "pipeline", "import", "export", "team", "settings"],
-  acquisitions: ["follow-ups", "leads", "analyzer", "pipeline"],
-  dispositions: ["buyers", "pipeline"],
+  owner: ["dashboard", "follow-ups", "leads", "comps", "analyzer", "buyers", "pipeline", "import", "export", "team", "settings"],
+  acquisitions: ["follow-ups", "leads", "comps", "analyzer", "pipeline"],
+  dispositions: ["buyers", "pipeline", "comps"],
   va: ["follow-ups", "leads"],
   buyer: [],
   pending: [],
