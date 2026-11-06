@@ -34,6 +34,7 @@ export const LEAD_SOURCES = [
   "Bing search",
   "Facebook / Instagram",
   "Nextdoor",
+  "Zillow",
   "Other",
 ] as const;
 
@@ -115,10 +116,10 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 
 // What each staff role can open in the CRM (the database enforces the data rules).
 export const NAV_BY_ROLE: Record<AppRole, string[]> = {
-  owner: ["dashboard", "follow-ups", "leads", "comps", "analyzer", "buyers", "pipeline", "import", "export", "team", "settings"],
-  acquisitions: ["follow-ups", "leads", "comps", "analyzer", "pipeline"],
+  owner: ["dashboard", "follow-ups", "leads", "lookup", "comps", "analyzer", "buyers", "pipeline", "import", "export", "team", "settings"],
+  acquisitions: ["follow-ups", "leads", "lookup", "comps", "analyzer", "pipeline"],
   dispositions: ["buyers", "pipeline", "comps"],
-  va: ["follow-ups", "leads"],
+  va: ["follow-ups", "leads", "lookup"],
   buyer: [],
   pending: [],
 };

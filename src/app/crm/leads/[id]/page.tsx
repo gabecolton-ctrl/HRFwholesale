@@ -10,6 +10,8 @@ import { dateShort, dateTime, money, phonePretty } from "@/lib/format";
 import { deleteLead, requestReview } from "../actions";
 import { site } from "@/lib/site";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { OwnerData } from "@/components/crm/OwnerData";
+import type { PropertyData } from "@/lib/tracerfy";
 
 export const metadata = { title: "Lead" };
 
@@ -114,6 +116,20 @@ export default async function LeadPage({ params, searchParams }: {
               </details>
             )}
           </section>
+
+          {profile.role !== "dispositions" && (
+            <section className="card p-4">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold">Owner & mortgage</h2>
+                <Link href={`/crm/lookup?lead=${id}`} className={`btn btn-sm ${lead.property_data ? "btn-ghost" : "btn-dark"}`}>{lead.property_data ? "Look up again" : "Look up owner"}</Link>
+              </div>
+              {lead.property_data?.hit ? (
+                <OwnerData d={lead.property_data as PropertyData} compact />
+              ) : (
+                <p className="text-sm text-ink-soft">Find the owner&apos;s phones and emails, what they owe, and their equity. About 20¢ a lookup.</p>
+              )}
+            </section>
+          )}
 
           {profile.role !== "va" && (
             <section className="card p-4 text-sm">
