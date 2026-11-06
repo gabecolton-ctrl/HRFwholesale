@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { submitSellerLead, type FormState } from "./actions";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BotFields } from "@/components/BotFields";
-import { CONDITIONS, SELL_REASONS, TIMELINES, US_STATES } from "@/lib/constants";
+import { CONDITIONS, HEARD_OPTIONS, SELL_REASONS, TIMELINES, US_STATES } from "@/lib/constants";
 import { SELLER_CONSENT_TEXT, site } from "@/lib/site";
 
 export function SellForm({ initialAddress }: { initialAddress?: string }) {
@@ -91,6 +91,14 @@ export function SellForm({ initialAddress }: { initialAddress?: string }) {
           <textarea id="reason" name="reason" rows={3} className="input" placeholder="Anything that helps us understand your situation" defaultValue={f.reason} />
         </div>
       </fieldset>
+
+      <div>
+        <label htmlFor="heard" className="label">How did you hear about us? <span className="font-normal text-muted">(optional)</span></label>
+        <select id="heard" name="heard" className="input" defaultValue={f.heard ?? ""}>
+          <option value="">Select…</option>
+          {HEARD_OPTIONS.map((h) => <option key={h}>{h}</option>)}
+        </select>
+      </div>
 
       <div className="rounded-lg border border-line bg-paper/60 p-4">
         <label className="flex gap-3 text-xs leading-relaxed text-ink-soft">

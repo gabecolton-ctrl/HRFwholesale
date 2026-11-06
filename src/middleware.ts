@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SOURCE_COOKIE, SOURCE_COOKIE_DAYS, TRACKING_CODES, sourceFromParams, sourceFromReferrer } from "@/lib/tracking";
 
 // 1) Two domains, one site:
 //    - Seller domain (NEXT_PUBLIC_SELLER_URL, e.g. hrfassets.com): "We buy houses" pages.
@@ -18,7 +19,7 @@ const hostOf = (u?: string | null) => {
 };
 
 const APP_ONLY = ["/crm", "/portal", "/login", "/auth", "/reset-password", "/no-access", "/buyers", "/alerts", "/api"];
-const SELLER_ONLY = ["/sell", "/about", "/contact"];
+const SELLER_ONLY = ["/sell", "/about", "/contact", "/situations", "/we-buy-houses"];
 const under = (path: string, list: string[]) => list.some((p) => path === p || path.startsWith(p + "/"));
 
 export async function middleware(request: NextRequest) {
@@ -35,6 +36,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   };
 
+  // Marketing short links: /m, /s, /g … tag the visitor and land them on the seller homepage.
+  const code = path.length > 1 && path.length <= 4 ? path.slice(1).toLowerCase() : "";
+  if (code && TRACKING_CODES[code]) {
+    if (split && host === appHost) return go(sellerUrl!);
+    const res = NextResponse.redirect(new URL("/" + request.nextUrl.search, request.url), 307);
+    res.cookies.set(SOURCE_COOKIE, TRACKING_CODES[code], { maxAge: SOURCE_COOKIE_DAYS * 86400, path: "/", sameSite: "lax", secure: true, httpOnly: true });
+    return res;
+  }
+  const tagged = sourceFromParams(request.nextUrl.searchParams) ??
+    (request.cookies.get(SOURCE_COOKIE) ? null : sourceFromReferrer(request.headers.get("referer")));
+  const tag = (res: NextResponse) => {
+    if (tagged && !under(path, APP_ONLY)) {
+      res.cookies.set(SOURCE_COOKIE, tagged, { maxAge: SOURCE_COOKIE_DAYS * 86400, path: "/", sameSite: "lax", secure: true, httpOnly: true });
+    }
+    return res;
+  };
+
   // Tell the public pages which audience they're serving (changes header/footer).
   const headers = new Headers(request.headers);
   let audience: "seller" | "investor" = "seller";
@@ -42,7 +60,7 @@ export async function middleware(request: NextRequest) {
   if (split && host === sellerHost) {
     if (under(path, APP_ONLY)) return go(appUrl!);
     headers.set("x-hrf-audience", "seller");
-    return NextResponse.next({ request: { headers } });
+    return tag(NextResponse.next({ request: { headers } }));
   }
   if (split && host === appHost) {
     if (under(path, SELLER_ONLY)) return go(sellerUrl!);
@@ -56,7 +74,7 @@ export async function middleware(request: NextRequest) {
 
   // Session handling only where logins matter.
   if (!under(path, ["/crm", "/portal", "/api", "/login", "/auth"])) {
-    return NextResponse.next({ request: { headers } });
+    return audience === "seller" ? tag(NextResponse.next({ request: { headers } })) : NextResponse.next({ request: { headers } });
   }
 
   const isPrivate = under(path, ["/crm", "/portal", "/api/export", "/api/files"]);

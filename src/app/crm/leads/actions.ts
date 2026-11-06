@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
+import { esc, sendEmail } from "@/lib/email";
+import { site } from "@/lib/site";
 import { LEAD_STATUSES } from "@/lib/constants";
 import { addressKey, phoneDigits, toNumber, toText } from "@/lib/format";
 
@@ -130,4 +132,32 @@ export async function deleteLead(fd: FormData) {
   if (error) redirect(`/crm/leads/${id}?error=${encodeURIComponent(error.message)}`);
   revalidatePath("/crm/leads");
   redirect("/crm/leads?deleted=1");
+}
+
+/** Emails a closed seller a link to leave a Google review, and logs it. */
+export async function requestReview(fd: FormData) {
+  const { supabase, user } = await requireRole("owner", "acquisitions");
+  const id = String(fd.get("lead_id"));
+  const reviewUrl = process.env.NEXT_PUBLIC_GOOGLE_REVIEW_URL;
+  if (!reviewUrl) redirect(`/crm/leads/${id}?error=${encodeURIComponent("Add your Google review link in Vercel (NEXT_PUBLIC_GOOGLE_REVIEW_URL) first.")}`);
+  const { data: l } = await supabase.from("leads").select("seller_name,email,status").eq("id", id).maybeSingle();
+  if (!l) redirect("/crm/leads");
+  if (l.status !== "Closed") redirect(`/crm/leads/${id}?error=Only+closed+sellers+can+be+asked+for+a+review`);
+  if (!l.email) redirect(`/crm/leads/${id}?error=${encodeURIComponent("No email on file. Use the Text option instead.")}`);
+  const first = (l.seller_name ?? "").split(" ")[0] || "there";
+  const r = await sendEmail({
+    to: l.email,
+    replyTo: site.email,
+    subject: `Thank you, ${first}. Could you share how it went?`,
+    text: `Hi ${first},\n\nThank you for working with ${site.legalName}. If you have a minute, an honest review on Google helps other homeowners know what to expect:\n${reviewUrl}\n\nThank you,\n${site.legalName}\n${site.phone}`,
+    html: `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#13283d;max-width:540px">
+<p>Hi ${esc(first)},</p>
+<p>Thank you for working with <b>${esc(site.legalName)}</b>. If you have a minute, an honest review on Google helps other homeowners know what to expect.</p>
+<p><a href="${esc(reviewUrl)}" style="display:inline-block;background:#b4502b;color:#fff;text-decoration:none;font-weight:bold;padding:12px 20px;border-radius:8px">Leave a Google review</a></p>
+<p>Thank you,<br>${esc(site.legalName)}<br>${esc(site.phone)}</p></div>`,
+  });
+  if (!r.ok) redirect(`/crm/leads/${id}?error=${encodeURIComponent(`Email didn't send: ${r.error}`)}`);
+  await supabase.from("lead_activities").insert({ lead_id: id, created_by: user.id, kind: "note", outcome: "Google review request emailed" });
+  revalidatePath(`/crm/leads/${id}`);
+  redirect(`/crm/leads/${id}?reviewed=1`);
 }

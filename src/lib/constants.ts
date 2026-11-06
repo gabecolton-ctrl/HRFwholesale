@@ -25,8 +25,41 @@ export const LEAD_SOURCES = [
   "PropStream",
   "Referral",
   "JV partner",
+  "Signs",
+  "Door hangers",
+  "Business cards",
+  "Google Business Profile",
+  "Google search",
+  "Google Ads",
+  "Bing search",
+  "Facebook / Instagram",
+  "Nextdoor",
   "Other",
 ] as const;
+
+/** Options for "How did you hear about us?" on the seller form. */
+export const HEARD_OPTIONS = [
+  "Letter or postcard",
+  "Sign",
+  "Door hanger",
+  "Phone call or text",
+  "Google search",
+  "Google Maps",
+  "Facebook / Instagram",
+  "Friend or referral",
+  "Other",
+] as const;
+export const HEARD_TO_SOURCE: Record<string, string> = {
+  "Letter or postcard": "Direct mail",
+  Sign: "Signs",
+  "Door hanger": "Door hangers",
+  "Phone call or text": "Skip trace + text/dialer",
+  "Google search": "Google search",
+  "Google Maps": "Google Business Profile",
+  "Facebook / Instagram": "Facebook / Instagram",
+  "Friend or referral": "Referral",
+  Other: "Website",
+};
 
 export const CONDITIONS = [
   "Move-in ready",

@@ -7,14 +7,15 @@ import { LeadForm } from "@/components/crm/LeadForm";
 import { leadOwners } from "@/lib/staff";
 import { CADENCE_DAYS } from "@/lib/constants";
 import { dateShort, dateTime, money, phonePretty } from "@/lib/format";
-import { deleteLead } from "../actions";
+import { deleteLead, requestReview } from "../actions";
+import { site } from "@/lib/site";
 import { ConfirmButton } from "@/components/ConfirmButton";
 
 export const metadata = { title: "Lead" };
 
 export default async function LeadPage({ params, searchParams }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ saved?: string; logged?: string; error?: string }>;
+  searchParams: Promise<{ saved?: string; logged?: string; error?: string; reviewed?: string }>;
 }) {
   const { supabase, profile } = await requireRole("owner", "acquisitions", "va");
   const { id } = await params;
@@ -56,6 +57,27 @@ export default async function LeadPage({ params, searchParams }: {
           Find it anytime under <Link href={`/crm/leads?status=${lead.status}`} className="font-semibold text-ink underline">Leads → {lead.status}</Link>.
         </p>
       )}
+      {sp.reviewed && <Notice>Review request emailed.</Notice>}
+      {lead.status === "Closed" && profile.role !== "va" && (() => {
+        const reviewUrl = process.env.NEXT_PUBLIC_GOOGLE_REVIEW_URL;
+        const first = (lead.seller_name ?? "").split(" ")[0];
+        const smsBody = `Hi ${first}, thank you for working with ${site.legalName}! If you have a minute, an honest Google review would really help other homeowners: ${reviewUrl ?? ""}`;
+        return (
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-sage/30 bg-sage/5 px-4 py-3 text-sm">
+            <span className="mr-auto font-medium">Closed deal: ask {first || "the seller"} for a Google review.</span>
+            {!reviewUrl ? (
+              <span className="text-ink-soft">Add your review link in Vercel as <code>NEXT_PUBLIC_GOOGLE_REVIEW_URL</code> to turn this on.</span>
+            ) : (
+              <>
+                {lead.email && (
+                  <form action={requestReview}><input type="hidden" name="lead_id" value={id} /><button className="btn btn-dark btn-sm">Email review link</button></form>
+                )}
+                {lead.phone && <a className="btn btn-ghost btn-sm" href={`sms:${lead.phone}?&body=${encodeURIComponent(smsBody)}`}>Text review link</a>}
+              </>
+            )}
+          </div>
+        );
+      })()}
       {sp.logged && <Notice>Follow-up logged.</Notice>}
       {sp.error && <Notice tone="danger">{sp.error}</Notice>}
 

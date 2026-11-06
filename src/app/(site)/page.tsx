@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { site } from "@/lib/site";
+import { CITIES, SITUATIONS } from "@/lib/seo-pages";
+import { JsonLd } from "@/components/JsonLd";
+import { organizationLd } from "@/lib/seo";
 
 const promises = [
   {
@@ -22,16 +25,7 @@ const steps = [
   { n: "3", title: "Get your cash offer", body: "A clear written offer with no obligation. If it works for you, you pick the closing date." },
 ];
 
-const situations = [
-  "Inherited a house",
-  "Behind on payments or taxes",
-  "Tired of being a landlord",
-  "Too many repairs",
-  "Relocating for work",
-  "Divorce or separation",
-  "Vacant or damaged property",
-  "Downsizing",
-];
+
 
 const faqs = [
   {
@@ -59,6 +53,7 @@ const faqs = [
 export default function Home() {
   return (
     <>
+      <JsonLd data={organizationLd()} />
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-full bg-[radial-gradient(60rem_30rem_at_85%_-10%,rgba(180,80,43,0.10),transparent)]" />
@@ -170,11 +165,29 @@ export default function Home() {
       <section className="container-x mt-20">
         <h2 className="h-display text-3xl font-semibold sm:text-4xl">We help with any situation</h2>
         <ul className="mt-6 flex flex-wrap gap-2">
-          {situations.map((s) => (
-            <li key={s} className="pill bg-white px-4 py-2 text-sm font-medium text-ink ring-1 ring-line">
-              {s}
+          {SITUATIONS.map((s) => (
+            <li key={s.slug}>
+              <Link href={`/situations/${s.slug}`} className="pill bg-white px-4 py-2 text-sm font-medium text-ink ring-1 ring-line hover:ring-ink-soft">
+                {s.nav}
+              </Link>
             </li>
           ))}
+        </ul>
+      </section>
+
+      {/* Areas */}
+      <section className="container-x mt-20">
+        <h2 className="h-display text-3xl font-semibold sm:text-4xl">Where we buy</h2>
+        <p className="mt-3 max-w-2xl text-ink-soft">Based in Dallas–Fort Worth and buying nationwide. Here are the cities we buy in most often.</p>
+        <ul className="mt-6 flex flex-wrap gap-2">
+          {CITIES.map((c) => (
+            <li key={c.slug}>
+              <Link href={`/we-buy-houses/${c.slug}`} className="pill bg-white px-4 py-2 text-sm font-medium text-ink ring-1 ring-line hover:ring-ink-soft">
+                {c.name}, {c.state}
+              </Link>
+            </li>
+          ))}
+          <li><Link href="/we-buy-houses" className="pill px-4 py-2 text-sm font-semibold text-clay">All areas →</Link></li>
         </ul>
       </section>
 

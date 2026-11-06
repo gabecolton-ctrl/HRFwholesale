@@ -1,6 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { SOURCE_COOKIE } from "@/lib/tracking";
+import { HEARD_TO_SOURCE } from "@/lib/constants";
+import { esc, sendEmail } from "@/lib/email";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { looksLikeBot, requestMeta } from "@/lib/request-meta";
@@ -37,7 +41,7 @@ const schema = z.object({
 
 export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<FormState> {
   const raw = Object.fromEntries(
-    ["name", "phone", "email", "address", "city", "state", "zip", "condition", "timeline", "reason"].map((k) => [k, String(fd.get(k) ?? "")]),
+    ["name", "phone", "email", "address", "city", "state", "zip", "condition", "timeline", "reason", "heard"].map((k) => [k, String(fd.get(k) ?? "")]),
   );
   if (looksLikeBot(fd)) redirect("/sell/thanks"); // silently drop bots
 
@@ -46,6 +50,10 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
     return { error: parsed.error.issues[0]?.message ?? "Please check the form", fields: raw };
   }
   const v = parsed.data;
+  // Lead source: tracking link/ad tag first, then the seller's own answer, else "Website".
+  const tagged = (await cookies()).get(SOURCE_COOKIE)?.value?.slice(0, 60);
+  const heard = String(fd.get("heard") ?? "");
+  const leadSource = tagged || HEARD_TO_SOURCE[heard] || "Website";
   const meta = await requestMeta();
   const db = createAdminClient();
 
@@ -62,7 +70,7 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
       condition: v.condition || null,
       timeline: v.timeline || null,
       reason_for_selling: v.reason || null,
-      lead_source: "Website",
+      lead_source: leadSource,
       next_follow_up: new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(new Date()), // call web leads today
     })
     .select("id")
@@ -94,6 +102,7 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
   await notifyTeam(
     `New seller lead: ${v.address}`,
     [
+      `Source: ${leadSource}`,
       `${v.name} · ${phonePretty(v.phone)}${v.email ? ` · ${v.email}` : ""}`,
       `${v.address}${v.city ? `, ${v.city}` : ""}, ${v.state} ${v.zip}`,
       [v.condition, v.timeline].filter(Boolean).join(" · "),
@@ -101,6 +110,37 @@ export async function submitSellerLead(_prev: FormState, fd: FormData): Promise<
     ].filter(Boolean),
     `${emailLinkBase()}/crm/leads/${lead.id}`,
   );
+
+  await db.from("lead_activities").insert({
+    lead_id: lead.id,
+    kind: "system",
+    outcome: `Submitted the website form${tagged ? ` (tracked: ${tagged})` : ""}${heard ? ` · said they heard about us via: ${heard}` : ""}`,
+  });
+
+  // Instant reply to the seller (only if they gave an email).
+  if (v.email) {
+    const first = v.name.split(" ")[0];
+    await sendEmail({
+      to: v.email,
+      replyTo: site.email,
+      subject: `We got your request, ${first}`,
+      text: [
+        `Hi ${first},`,
+        "",
+        `Thanks for reaching out to ${site.legalName} about ${v.address}. We received your request and will call you shortly at ${phonePretty(v.phone)} to learn a little more and set up a quick walkthrough.`,
+        "",
+        "There's no cost and no obligation. If you'd rather talk now, call us at " + site.phone + ` (${site.hours}).`,
+        "",
+        site.legalName,
+        site.email,
+      ].join("\n"),
+      html: `<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#13283d;max-width:540px">
+<p>Hi ${esc(first)},</p>
+<p>Thanks for reaching out to <b>${esc(site.legalName)}</b> about <b>${esc(v.address)}</b>. We received your request and will call you shortly at ${esc(phonePretty(v.phone))} to learn a little more and set up a quick walkthrough.</p>
+<p>There's no cost and no obligation. If you'd rather talk now, call us at <a href="${esc(site.phoneHref)}">${esc(site.phone)}</a> (${esc(site.hours)}).</p>
+<p style="margin-top:24px">${esc(site.legalName)}<br><a href="mailto:${esc(site.email)}">${esc(site.email)}</a></p></div>`,
+    }).catch(() => undefined);
+  }
 
   redirect("/sell/thanks");
 }

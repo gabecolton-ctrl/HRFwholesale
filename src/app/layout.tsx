@@ -2,9 +2,14 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { site } from "@/lib/site";
 import { AuthHashForwarder } from "@/components/AuthHashForwarder";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.sellerUrl ?? site.url),
+  // Google Search Console: paste the "HTML tag" content value into this env var (or verify by DNS instead).
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION } }
+    : {}),
   title: { default: `Sell Your House Fast for Cash, Nationwide | ${site.brand}`, template: `%s | ${site.brand}` },
   description:
     "Get a fair cash offer for your house, anywhere in the U.S. No repairs, no cleaning, no agent fees. Close on your timeline.",
@@ -28,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh antialiased">
         <AuthHashForwarder />
         {children}
+        <SiteAnalytics />
       </body>
     </html>
   );

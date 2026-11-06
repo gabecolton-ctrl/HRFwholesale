@@ -39,6 +39,8 @@ function SellerShell({ children }: { children: React.ReactNode }) {
               <li><Link className="hover:text-white" href={sellerHref("/sell")}>Get a cash offer</Link></li>
               <li><Link className="hover:text-white" href={sellerHref("/about")}>How it works</Link></li>
               <li><Link className="hover:text-white" href={sellerHref("/contact")}>Contact us</Link></li>
+              <li><Link className="hover:text-white" href={sellerHref("/situations")}>Situations we help with</Link></li>
+              <li><Link className="hover:text-white" href={sellerHref("/we-buy-houses")}>Areas we buy</Link></li>
             </ul>
           </div>
           <div>

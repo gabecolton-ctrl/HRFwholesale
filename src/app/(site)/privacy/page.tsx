@@ -16,7 +16,8 @@ export default function Privacy() {
         <li><strong>Information you give us:</strong> your name, phone number, email, property address and details, and anything you tell us about your situation.</li>
         <li><strong>Investor information:</strong> company name, buying criteria and proof-of-funds documents you upload.</li>
         <li><strong>Consent records:</strong> when you agree to be contacted, we record the wording you agreed to, the date and time, your IP address and browser.</li>
-        <li><strong>Basic technical data:</strong> pages visited and device/browser type, used to keep the site secure and working.</li>
+        <li><strong>Basic technical data:</strong> pages visited and device/browser type, used to keep the site secure and working. We use privacy-friendly analytics that count visits without advertising cookies.</li>
+        <li><strong>How you found us:</strong> if you arrive from one of our mailers, signs, ads or links, a small cookie remembers that source for up to 90 days so we know which marketing works. It isn't used for advertising or shared.</li>
       </ul>
       <h2>How we use it</h2>
       <ul>
