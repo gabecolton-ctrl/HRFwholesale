@@ -93,9 +93,16 @@ export async function pullFeed(db: SupabaseClient, feed: Feed): Promise<{ added:
     const since = feed.last_pulled_at ? new Date(new Date(feed.last_pulled_at).getTime() - 2 * 86_400_000) : new Date(Date.now() - 14 * 86_400_000);
     const kw = feed.keywords.map((k) => k.trim().toLowerCase()).filter(Boolean);
     const q = new URLSearchParams({ $limit: "2000", $order: `${f.date} DESC`, $where: `${f.date} > '${fmtFloating(since)}'` });
-    if (kw.length && f.type) {
-      const ors = kw.map((k) => `lower(${f.type}) like '%${k.replace(/'/g, "''")}%'`).join(" OR ");
+    // Keywords keep matching types; a keyword starting with "-" throws matching types out (e.g. "-sign").
+    const esc = (k: string) => k.replace(/'/g, "''");
+    const inc = kw.filter((k) => !k.startsWith("-"));
+    const exc = kw.filter((k) => k.startsWith("-")).map((k) => k.slice(1).trim()).filter(Boolean);
+    if (inc.length && f.type) {
+      const ors = inc.map((k) => `lower(${f.type}) like '%${esc(k)}%'`).join(" OR ");
       q.set("$where", `${q.get("$where")} AND (${ors})`);
+    }
+    if (exc.length && f.type) {
+      q.set("$where", `${q.get("$where")} AND ${exc.map((k) => `lower(${f.type}) not like '%${esc(k)}%'`).join(" AND ")}`);
     }
     const res = await fetch(`${base(feed.domain)}/resource/${feed.dataset_id}.json?${q}`, { headers: headers(), cache: "no-store", signal: AbortSignal.timeout(25_000) });
     if (!res.ok) {

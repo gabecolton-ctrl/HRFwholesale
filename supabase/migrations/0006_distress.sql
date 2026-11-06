@@ -109,5 +109,5 @@ grant select, insert, update, delete on public.distress_signals to authenticated
 -- Dallas starter feed: 311 service requests filtered to code-compliance problems that point to neglected houses.
 insert into public.signal_feeds (name, city, state, domain, dataset_id, keywords)
 values ('Dallas code complaints (311)', 'Dallas', 'TX', 'www.dallasopendata.com', 'd7e7-envw',
-        array['high weeds','weed','vacant','open and vacant','structure','junk','litter','dangerous','substandard','unsecure','boarded','trash','illegal dumping','rodent'])
+        array['high weed','vacant','substandard','structure','unsecure','boarded','stagnant','junk motor','-sign','-tpw','-dwu','-street','-alley','-right of way'])
 on conflict (domain, dataset_id) do nothing;

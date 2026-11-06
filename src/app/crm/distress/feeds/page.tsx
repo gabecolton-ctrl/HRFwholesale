@@ -58,7 +58,7 @@ export default async function FeedsPage({ searchParams }: { searchParams: Promis
                 <div className="col-span-full">
                   <label className="label" htmlFor={`k-${f.id}`}>Only keep complaint types containing (comma-separated)</label>
                   <input id={`k-${f.id}`} name="keywords" className="input" defaultValue={f.keywords.join(", ")} />
-                  <p className="hint">Blank keeps everything. These are the kinds of complaints that usually mean a neglected or vacant house.</p>
+                  <p className="hint">Blank keeps everything. Put a minus in front to throw a type out (like -sign). Aim for complaints about a specific house being neglected or vacant.</p>
                 </div>
                 <p className="col-span-full text-xs font-semibold text-ink-soft">Advanced: column names (detected automatically; change only if pulls come back empty or wrong)</p>
                 {([["field_address", "Address column"], ["field_type", "Complaint type column"], ["field_date", "Date column"], ["field_zip", "ZIP column"], ["field_id", "Record ID column"]] as const).map(([k, l]) => (
@@ -85,7 +85,7 @@ export default async function FeedsPage({ searchParams }: { searchParams: Promis
             <select id="state" name="state" className="input" defaultValue="TX">{US_STATES.map(([c, n]) => <option key={c} value={c}>{n}</option>)}</select>
           </div>
           <div><label className="label" htmlFor="name">Name (optional)</label><input id="name" name="name" className="input" placeholder="Fort Worth code violations" /></div>
-          <div><label className="label" htmlFor="keywords">Only keep types containing (optional)</label><input id="keywords" name="keywords" className="input" defaultValue="weed, vacant, structure, junk, trash, dangerous, substandard, boarded" /></div>
+          <div><label className="label" htmlFor="keywords">Only keep types containing (optional)</label><input id="keywords" name="keywords" className="input" defaultValue="weed, vacant, substandard, structure, unsecure, boarded, stagnant" /></div>
           <div className="col-span-full"><SubmitButton pendingText="Checking dataset…">Add city</SubmitButton></div>
         </form>
       </section>
