@@ -46,7 +46,7 @@ export function compsKey(address: string, radius: string) {
 type RcComp = Record<string, unknown>;
 
 export async function fetchComps(opts: { address: string; radius: number; sqft?: number | null; beds?: number | null; baths?: number | null }): Promise<CompsResult> {
-  const key = process.env.RENTCAST_API_KEY;
+  const key = process.env.RENTCAST_API_KEY?.trim().replace(/^["']|["']$/g, "");
   if (!key) throw new Error("RentCast isn't connected yet. Add RENTCAST_API_KEY in Vercel, then redeploy.");
   const base = process.env.RENTCAST_BASE_URL ?? "https://api.rentcast.io/v1";
   const q = new URLSearchParams({
