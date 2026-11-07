@@ -14,6 +14,8 @@ const num = (s: string | number | null | undefined) => {
 const usd = (n: number | null) => (n === null ? "—" : n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }));
 const round1k = (n: number) => Math.round(n / 1000) * 1000;
 
+type Cond = "" | "updated" | "average" | "needs";
+
 type Props = {
   lookupId: string;
   pulledAt: string;
@@ -59,16 +61,24 @@ export function CompsResults(p: Props) {
   const [picked, setPicked] = useState<Set<number>>(() => new Set(rows.filter((r) => r.why.length === 0).map((r) => r.i)));
   const toggle = (i: number) => setPicked((s) => { const n = new Set(s); if (n.has(i)) n.delete(i); else n.add(i); return n; });
 
-  const arv = useMemo(() => {
+  // Condition you judged from the photos. ARV comes only from Updated comps; as-is value from the rest.
+  const [cond, setCond] = useState<Record<number, Cond>>({});
+  const [haircut, setHaircut] = useState("5");
+  const cut = 1 - Math.min(Math.max(num(haircut) ?? 0, 0), 30) / 100;
+
+  const stats = (keep: (i: number) => boolean) => {
     const ppsf = result.comps
-      .filter((_, i) => picked.has(i))
-      .map((c) => ({ p: num(c.sold_price), s: num(c.sqft) }))
-      .filter((x) => x.p && x.s)
-      .map((x) => (x.p as number) / (x.s as number));
+      .map((c, i) => ({ i, p: num(c.sold_price), s: num(c.sqft) }))
+      .filter((x) => picked.has(x.i) && keep(x.i) && x.p && x.s)
+      .map((x) => ((x.p as number) / (x.s as number)) * cut);
     if (!ppsf.length || !subj) return null;
     const avg = ppsf.reduce((a, b) => a + b, 0) / ppsf.length;
     return { n: ppsf.length, ppsf: avg, value: round1k(avg * subj), low: round1k(Math.min(...ppsf) * subj), high: round1k(Math.max(...ppsf) * subj) };
-  }, [picked, result.comps, subj]);
+  };
+  const updated = stats((i) => cond[i] === "updated");
+  const arv = updated ?? stats((i) => cond[i] !== "needs");
+  const arvIsEstimate = !updated;
+  const asIs = stats((i) => cond[i] === "average" || cond[i] === "needs");
 
   const [rehab, setRehab] = useState("Medium");
   const [price, setPrice] = useState(p.price ? String(p.price) : "");
@@ -77,7 +87,7 @@ export function CompsResults(p: Props) {
   const pr = num(price);
   const verdict = mao === null || pr === null ? null : pr <= mao ? "GO" : "PASS";
 
-  const pickedComps = result.comps.filter((_, i) => picked.has(i));
+  const pickedComps = result.comps.map((c, i) => ({ ...c, condition: cond[i] ?? "" })).filter((_, i) => picked.has(i));
   const s = result.subject;
   const facts = [s.beds && `${s.beds} bd`, s.baths && `${s.baths} ba`, s.year_built && `built ${s.year_built}`, s.property_type].filter(Boolean).join(" · ");
 
@@ -102,9 +112,20 @@ export function CompsResults(p: Props) {
       {/* Answer */}
       <section className="grid gap-3 sm:grid-cols-3">
         <div className="card p-4">
-          <p className="text-xs font-semibold text-ink-soft">ARV (from {arv?.n ?? 0} comp{arv?.n === 1 ? "" : "s"})</p>
+          <p className="text-xs font-semibold text-ink-soft">
+            {arvIsEstimate ? `ARV estimate (${arv?.n ?? 0} comp${arv?.n === 1 ? "" : "s"}, none marked Updated)` : `ARV (from ${arv?.n} Updated comp${arv?.n === 1 ? "" : "s"})`}
+          </p>
           <p className="h-display mt-1 text-3xl font-semibold">{usd(arv?.value ?? null)}</p>
           <p className="text-xs text-ink-soft">{arv ? `${usd(Math.round(arv.ppsf))}/sq ft · range ${usd(arv.low)}–${usd(arv.high)}` : "Check at least one comp below."}</p>
+          {arvIsEstimate && arv && <p className="mt-1 text-xs font-semibold text-amber">Mark the renovated comps “Updated” below for a true ARV.</p>}
+          <p className="mt-2 border-t border-line pt-2 text-xs text-ink-soft">
+            As-is value: <b className="text-ink">{usd(asIs?.value ?? null)}</b>{asIs ? ` (${asIs.n} Average/Needs-work comp${asIs.n === 1 ? "" : "s"})` : " (mark some comps Average or Needs work)"}
+          </p>
+          <label className="mt-1 flex items-center gap-1.5 text-xs text-ink-soft">
+            Take off
+            <input className="input w-12 px-1.5 py-0.5 text-xs" inputMode="numeric" value={haircut} onChange={(e) => setHaircut(e.target.value)} aria-label="Percent to take off list prices" />
+            % (list price → likely sold price)
+          </label>
         </div>
         <div className="card p-4">
           <p className="text-xs font-semibold text-ink-soft">Repairs ({rehab}, ${p.rates[rehab]}/sq ft)</p>
@@ -140,7 +161,7 @@ export function CompsResults(p: Props) {
           <div className="table-wrap">
             <table className="data">
               <thead>
-                <tr><th className="w-8"><span className="sr-only">Use</span></th><th>Address</th><th className="text-right">Price</th><th className="text-right">$/sq ft</th><th className="text-right">Sq ft</th><th>Bd/Ba</th><th className="text-right">Distance</th><th>Status</th><th>Date</th><th></th></tr>
+                <tr><th className="w-8"><span className="sr-only">Use</span></th><th>Address</th><th>Condition</th><th className="text-right">Price</th><th className="text-right">$/sq ft</th><th className="text-right">Sq ft</th><th>Bd/Ba</th><th className="text-right">Distance</th><th>Status</th><th>Date</th><th></th></tr>
               </thead>
               <tbody>
                 {rows.map(({ c, i, why }) => {
@@ -151,6 +172,23 @@ export function CompsResults(p: Props) {
                       <td className="min-w-48">
                         <span className="font-medium text-ink">{c.address}</span>
                         {why.length > 0 && <span className="block text-xs">{why.join(" · ")}</span>}
+                      </td>
+                      <td>
+                        <select
+                          aria-label={`Condition of ${c.address}`}
+                          className={`input w-32 px-2 py-1 text-xs ${cond[i] === "updated" ? "border-sage font-semibold text-sage" : cond[i] === "needs" ? "border-danger text-danger" : ""}`}
+                          value={cond[i] ?? ""}
+                          onChange={(e) => {
+                            const v = e.target.value as Cond;
+                            setCond((m) => ({ ...m, [i]: v }));
+                            if (v && !picked.has(i)) toggle(i);
+                          }}
+                        >
+                          <option value="">Not rated</option>
+                          <option value="updated">Updated</option>
+                          <option value="average">Average</option>
+                          <option value="needs">Needs work</option>
+                        </select>
                       </td>
                       <td className="text-right tabular-nums">{usd(pp)}</td>
                       <td className="text-right tabular-nums">{pp && sq ? usd(Math.round(pp / sq)) : "—"}</td>
@@ -167,7 +205,7 @@ export function CompsResults(p: Props) {
             </table>
           </div>
         )}
-        <p className="hint mt-2">Tap “Photos” to eyeball condition. Uncheck flips and fixer-uppers that don&apos;t look like your finished house. Fewer good comps beat more bad ones.</p>
+        <p className="hint mt-2">Tap “Photos” and rate each comp. <b>Updated</b> = looks like a finished flip (new floors, kitchen, paint); these set your ARV. <b>Average</b> = livable but dated. <b>Needs work</b> = a fixer. Those two set the as-is value, which helps when you talk price with the seller. Three Updated comps beat ten unrated ones.</p>
       </section>
 
       {/* Actions */}

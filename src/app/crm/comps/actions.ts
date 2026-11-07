@@ -70,7 +70,7 @@ export async function useCompsOnLead(fd: FormData) {
   try {
     comps = JSON.parse(String(fd.get("comps_json") ?? "[]"));
   } catch {}
-  const keep = ["address", "sold_price", "sold_date", "beds", "baths", "sqft", "distance"];
+  const keep = ["address", "sold_price", "sold_date", "beds", "baths", "sqft", "distance", "condition"];
   comps = comps.slice(0, 10).map((c) => Object.fromEntries(keep.map((k) => [k, c[k] ?? ""])));
 
   const { data: lead } = await supabase.from("leads").select("id,analysis,sqft").eq("id", leadId).maybeSingle();
