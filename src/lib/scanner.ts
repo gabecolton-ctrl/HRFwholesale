@@ -74,6 +74,15 @@ type Existing = { rentcast_id: string; price: number | null; first_price: number
 
 export type Vetted = ReturnType<typeof vet>;
 
+/** Auction sites list homes on the MLS too; you can't put those under contract, so they're skipped. */
+const AUCTION = /auction|xome|hubzu|realtybid|bid4assets|williams\s*(&|and)?\s*williams|hudson\s*(&|and)?\s*marshall|tranzon|ten-?x\b|\bbid\b|bidding|online sale/i;
+export function isAuction(r: Rc) {
+  const a = (r.listingAgent ?? {}) as Rc;
+  const o = (r.listingOffice ?? {}) as Rc;
+  const text = [r.listingType, r.mlsName, a.name, a.email, a.website, o.name, o.email, o.website].map(s).join(" ");
+  return AUCTION.test(text);
+}
+
 /** Scores one listing. Exported for tests. */
 export function vet(r: Rc, ctx: { zipMedian: number | null; zipP75: number | null; settings: AppSettings; prev?: Existing }) {
   const price = n(r.price);
@@ -91,9 +100,11 @@ export function vet(r: Rc, ctx: { zipMedian: number | null; zipP75: number | nul
   if (sqft !== null && sqft < 700) reject.push("under 700 sq ft");
   if (type === "New Construction") reject.push("new construction");
   if (hoa !== null && hoa > 150) reject.push("HOA over $150/mo");
+  if (isAuction(r)) reject.push("auction listing");
 
   // Motivation
-  if (type === "Foreclosure") { score += 30; flags.push("Foreclosure"); }
+  // Bank-owned homes: banks rarely accept assignable contracts, so only a small bump.
+  if (type === "Foreclosure") { score += 10; flags.push("Bank-owned / foreclosure"); }
   if (type === "Short Sale") { score += 25; flags.push("Short sale"); }
   if (dom !== null) {
     if (dom >= 120) { score += 25; flags.push(`${dom} days on market`); }

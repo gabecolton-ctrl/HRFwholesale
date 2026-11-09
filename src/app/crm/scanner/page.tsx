@@ -174,8 +174,8 @@ export default async function Scanner({ searchParams }: { searchParams: Promise<
       <details className="card mt-5 p-4 text-sm">
         <summary className="cursor-pointer font-semibold">How listings are vetted</summary>
         <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft">
-          <li><b>Filters:</b> single-family, your price range and bedroom minimum, 700+ sq ft, HOA under $150/mo, no new construction.</li>
-          <li><b>Seller motivation:</b> foreclosure (+30) or short sale (+25); days on market (60+ = +14, 90+ = +20, 120+ = +25); each price cut while we&apos;ve watched it (+12, max +24); relisted in the last year (+10).</li>
+          <li><b>Filters:</b> single-family, your price range and bedroom minimum, 700+ sq ft, HOA under $150/mo, no new construction, no auction listings (Auction.com, Xome, Hubzu and similar).</li>
+          <li><b>Seller motivation:</b> short sale (+25); bank-owned (+10, banks rarely allow assignments); days on market (60+ = +14, 90+ = +20, 120+ = +25); each price cut while we&apos;ve watched it (+12, max +24); relisted in the last year (+10).</li>
           <li><b>Price:</b> $/sq ft vs. other listings in the ZIP (12%+ under = +12, 20%+ = +22, 30%+ = +30).</li>
           <li><b>Deal math:</b> rough ARV = top-quarter $/sq ft in the ZIP × size, less 5%. Repairs at your Medium rate (Heavy if built before 1960). Max offer uses your MAO % and fee. Price at or under max offer = +25, within 15% = +15.</li>
           <li><b>Qualified</b> = passes the filters and scores 40+. 70+ is a strong lead.</li>
