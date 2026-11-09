@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { toNumber, toText } from "@/lib/format";
 import { compsKey, fetchComps, MONTHLY_LIMIT } from "@/lib/rentcast";
+import { rentcastUsedThisMonth } from "@/lib/scanner";
 
 const RADII = ["0.5", "1", "2"];
 
@@ -33,11 +34,8 @@ export async function pullComps(fd: FormData) {
     if (hit) back({ id: hit.id, lead, cached: "1" });
   }
 
-  const monthStart = new Date();
-  monthStart.setUTCDate(1);
-  monthStart.setUTCHours(0, 0, 0, 0);
-  const { count } = await supabase.from("comp_lookups").select("id", { count: "exact", head: true }).gte("created_at", monthStart.toISOString());
-  if ((count ?? 0) >= MONTHLY_LIMIT) {
+  const count = await rentcastUsedThisMonth(supabase);
+  if (count >= MONTHLY_LIMIT) {
     back({ lead, address, error: `You've used all ${MONTHLY_LIMIT} lookups this month. Re-open a past lookup below, or raise RENTCAST_MONTHLY_LIMIT after upgrading your RentCast plan.` });
   }
 

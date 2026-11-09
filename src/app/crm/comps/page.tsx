@@ -5,6 +5,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { getSettings } from "@/lib/settings";
 import { dateShort } from "@/lib/format";
 import { MONTHLY_LIMIT, rentcastConfigured, type CompsResult } from "@/lib/rentcast";
+import { rentcastUsedThisMonth } from "@/lib/scanner";
 import { pullComps } from "./actions";
 import { CompsResults } from "./CompsResults";
 
@@ -17,13 +18,10 @@ export default async function CompsPage({ searchParams }: { searchParams: Promis
   const { id, lead: leadId, error, address: typed, cached } = await searchParams;
   const canSendToLead = profile.role !== "dispositions";
 
-  const monthStart = new Date();
-  monthStart.setUTCDate(1);
-  monthStart.setUTCHours(0, 0, 0, 0);
 
   const [settings, { count: used }, { data: recent }, leadRes, lookupRes] = await Promise.all([
     getSettings(supabase),
-    supabase.from("comp_lookups").select("id", { count: "exact", head: true }).gte("created_at", monthStart.toISOString()),
+    rentcastUsedThisMonth(supabase).then((c) => ({ count: c })),
     supabase.from("comp_lookups").select("id,created_at,query").order("created_at", { ascending: false }).limit(8),
     leadId && canSendToLead
       ? supabase.from("leads").select("id,address,city,state,zip,sqft,beds,baths,asking_price,offer_amount").eq("id", leadId).maybeSingle()
@@ -73,7 +71,7 @@ export default async function CompsPage({ searchParams }: { searchParams: Promis
           </div>
           <p className="hint mt-2">Filling these in always pulls a fresh lookup.</p>
         </details>
-        <p className="col-span-full hint">{remaining} of {MONTHLY_LIMIT} lookups left this month. Looking up the same address again within 30 days is free.</p>
+        <p className="col-span-full hint">{remaining} of {MONTHLY_LIMIT} RentCast requests left this month (comps and the Deal Scanner share them). Looking up the same address again within 30 days is free.</p>
       </form>
 
       {lookup ? (
