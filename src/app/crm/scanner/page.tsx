@@ -123,7 +123,7 @@ export default async function Scanner({ searchParams }: { searchParams: Promise<
                       <td className="text-right whitespace-nowrap tabular-nums">
                         <span className="font-semibold">{money(r.price)}</span>
                         {r.first_price && r.price && r.first_price > r.price && <span className="block text-xs text-ink-soft line-through">{money(r.first_price)}</span>}
-                        <span className="block text-xs text-ink-soft">{ppsf ? `$${ppsf}/sqft` : ""}{r.zip_ppsf ? ` · ZIP $${r.zip_ppsf}` : ""}</span>
+                        <span className="block text-xs text-ink-soft">{ppsf ? `$${ppsf}/sqft` : ""}{r.zip_ppsf ? ` · similar $${r.zip_ppsf}` : ""}</span>
                       </td>
                       <td className="min-w-48">
                         <span className="flex flex-wrap gap-1">
@@ -176,8 +176,8 @@ export default async function Scanner({ searchParams }: { searchParams: Promise<
         <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft">
           <li><b>Filters:</b> single-family, your price range and bedroom minimum, 700+ sq ft, HOA under $150/mo, no new construction, no auction listings (Auction.com, Xome, Hubzu and similar).</li>
           <li><b>Seller motivation:</b> short sale (+25); bank-owned (+10, banks rarely allow assignments); days on market (60+ = +14, 90+ = +20, 120+ = +25); each price cut while we&apos;ve watched it (+12, max +24); relisted in the last year (+10).</li>
-          <li><b>Price:</b> $/sq ft vs. other listings in the ZIP (12%+ under = +12, 20%+ = +22, 30%+ = +30).</li>
-          <li><b>Deal math:</b> rough ARV = top-quarter $/sq ft in the ZIP × size, less 5%. Repairs at your Medium rate (Heavy if built before 1960). Max offer uses your MAO % and fee. Price at or under max offer = +25, within 15% = +15.</li>
+          <li><b>Price:</b> $/sq ft vs. similar homes: same ZIP and size within 25% (or citywide within 20% when the ZIP has too few). 12%+ under = +12, 20%+ = +22, 30%+ = +30.</li>
+          <li><b>Deal math:</b> rough ARV = similar homes&apos; median $/sq ft × size, less 5%. If that ARV is more than 2× the price, the numbers are flagged and get no points (usually bad data, a tear-down, or a house unlike its neighbors). Repairs at your Medium rate (Heavy if built before 1960). Max offer uses your MAO % and fee. Price at or under max offer = +25, within 15% = +15.</li>
           <li><b>Qualified</b> = passes the filters and scores 40+. 70+ is a strong lead.</li>
           <li>These are screening numbers from list prices. Always pull comps, rate condition, and confirm with the agent before you offer.</li>
         </ul>

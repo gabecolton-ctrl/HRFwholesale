@@ -41,7 +41,8 @@ async function fetchPage(m: Market, offset: number): Promise<{ rows: Rc[]; total
     state: m.state,
     status: "Active",
     propertyType: "Single Family",
-    price: `${m.price_min}:${m.price_max}`,
+    // Fetch up to 2× your max price so bigger/better homes are in the comparison set.
+    price: `${m.price_min}:${Math.round(m.price_max * 2)}`,
     bedrooms: `${m.min_beds}:*`,
     limit: "500",
     offset: String(offset),
@@ -64,11 +65,6 @@ const median = (a: number[]) => {
   const m = Math.floor(x.length / 2);
   return x.length % 2 ? x[m] : (x[m - 1] + x[m]) / 2;
 };
-const pct = (a: number[], p: number) => {
-  if (!a.length) return null;
-  const x = [...a].sort((u, v) => u - v);
-  return x[Math.min(x.length - 1, Math.floor(p * (x.length - 1) + 0.5))];
-};
 
 type Existing = { rentcast_id: string; price: number | null; first_price: number | null; price_drops: number; status: string; first_seen_at: string; lead_id: string | null };
 
@@ -84,7 +80,7 @@ export function isAuction(r: Rc) {
 }
 
 /** Scores one listing. Exported for tests. */
-export function vet(r: Rc, ctx: { zipMedian: number | null; zipP75: number | null; settings: AppSettings; prev?: Existing }) {
+export function vet(r: Rc, ctx: { similar: number | null; similarN: number; settings: AppSettings; prev?: Existing }) {
   const price = n(r.price);
   const sqft = n(r.squareFootage);
   const type = s(r.listingType) || "Standard";
@@ -124,23 +120,27 @@ export function vet(r: Rc, ctx: { zipMedian: number | null; zipP75: number | nul
   const relisted = Object.keys(hist).some((d) => d !== listed && d >= yearAgo && s(hist[d]?.event).includes("Sale"));
   if (relisted) { score += 10; flags.push("Relisted"); }
 
-  // Price vs. the ZIP
+  // Price vs. SIMILAR homes (same ZIP, size within 25%). Comparing to the whole ZIP made big houses look cheap.
   const ppsf = price && sqft ? price / sqft : null;
+  const rate = year !== null && year < 1960 ? ctx.settings.rehab_heavy_sqft : ctx.settings.rehab_medium_sqft;
+  // Rough ARV: median $/sq ft of similar listings × size, less 5% list→sold.
+  const arv = sqft && ctx.similar ? Math.round((ctx.similar * sqft * 0.95) / 1000) * 1000 : null;
+  const repairs = sqft ? Math.round(sqft * rate) : null;
+  const mao = arv !== null && repairs !== null ? Math.round(arv * (ctx.settings.default_mao_pct / 100) - repairs - ctx.settings.default_fee) : null;
+  // Sanity check: a list price under half of ARV usually means bad data, a tear-down, or a house unlike its neighbors.
+  const suspicious = !!(arv && price && arv > price * 2);
+  if (!ctx.similar) flags.push("Not enough similar homes to price");
+  else if (suspicious) flags.push("Numbers look off: check comps");
+
   let discount: number | null = null;
-  if (ppsf && ctx.zipMedian) {
-    discount = 1 - ppsf / ctx.zipMedian;
+  if (ppsf && ctx.similar && !suspicious) {
+    discount = 1 - ppsf / ctx.similar;
     if (discount >= 0.3) score += 30;
     else if (discount >= 0.2) score += 22;
     else if (discount >= 0.12) score += 12;
-    if (discount >= 0.12) flags.push(`${Math.round(discount * 100)}% under ZIP $/sq ft`);
+    if (discount >= 0.12) flags.push(`${Math.round(discount * 100)}% under similar homes`);
   }
-
-  // Quick deal math: ARV ≈ upper-quartile $/sq ft in the ZIP (updated homes), less 5% list→sold.
-  const rate = year !== null && year < 1960 ? ctx.settings.rehab_heavy_sqft : ctx.settings.rehab_medium_sqft;
-  const arv = sqft && ctx.zipP75 ? Math.round((ctx.zipP75 * sqft * 0.95) / 1000) * 1000 : null;
-  const repairs = sqft ? Math.round(sqft * rate) : null;
-  const mao = arv !== null && repairs !== null ? Math.round(arv * (ctx.settings.default_mao_pct / 100) - repairs - ctx.settings.default_fee) : null;
-  if (mao !== null && price) {
+  if (mao !== null && price && !suspicious) {
     if (price <= mao) { score += 25; flags.push("Price at/under max offer"); }
     else if (price <= mao * 1.15) { score += 15; flags.push("Within 15% of max offer"); }
     else if (price <= mao * 1.3) score += 6;
@@ -173,20 +173,19 @@ export async function scanMarket(db: SupabaseClient, m: Market, settings: AppSet
       if (res.rows.length < 500 || (total !== null && rows.length >= total)) break;
     }
 
-    // $/sq ft by ZIP (fall back to the whole city when a ZIP has fewer than 5 listings).
-    const byZip = new Map<string, number[]>();
-    const all: number[] = [];
-    for (const r of rows) {
-      const p = n(r.price), q = n(r.squareFootage);
-      if (!p || !q || q < 500) continue;
-      const v = p / q;
-      all.push(v);
-      const z = s(r.zipCode);
-      byZip.set(z, [...(byZip.get(z) ?? []), v]);
-    }
-    const stat = (z: string) => {
-      const a = byZip.get(z) ?? [];
-      return a.length >= 5 ? { med: median(a), p75: pct(a, 0.75) } : { med: median(all), p75: pct(all, 0.75) };
+    // Comparison set: every fetched listing with a price and size, except new construction.
+    const pool = rows
+      .map((r) => ({ id: s(r.id), zip: s(r.zipCode), p: n(r.price), q: n(r.squareFootage), t: s(r.listingType) }))
+      .filter((x) => x.p && x.q && x.q >= 500 && x.t !== "New Construction") as { id: string; zip: string; p: number; q: number }[];
+    /** Median $/sq ft of similar-size homes: same ZIP (4+ needed), else citywide within 20% size (6+ needed). */
+    const similarFor = (r: Rc) => {
+      const q = n(r.squareFootage), id = s(r.id), zip = s(r.zipCode);
+      if (!q) return { med: null, n: 0 };
+      const near = (x: { q: number }, band: number) => Math.abs(x.q - q) / q <= band;
+      const inZip = pool.filter((x) => x.id !== id && x.zip === zip && near(x, 0.25)).map((x) => x.p / x.q);
+      if (inZip.length >= 4) return { med: median(inZip), n: inZip.length };
+      const city = pool.filter((x) => x.id !== id && near(x, 0.2)).map((x) => x.p / x.q);
+      return city.length >= 6 ? { med: median(city), n: city.length } : { med: null, n: 0 };
     };
 
     const { data: ex } = await db.from("scan_listings").select("rentcast_id,price,first_price,price_drops,status,first_seen_at,lead_id").eq("market_id", m.id);
@@ -195,14 +194,16 @@ export async function scanMarket(db: SupabaseClient, m: Market, settings: AppSet
     const now = new Date().toISOString();
     let qualified = 0;
     const unique = [...new Map(rows.filter((r) => s(r.id)).map((r) => [s(r.id), r])).values()];
+    // Only homes in YOUR price range go on the list; the rest were just for comparison.
     const upserts = unique
       .filter((r) => s(r.addressLine1 || r.formattedAddress))
+      .filter((r) => { const p = n(r.price); return p !== null && p >= m.price_min && p <= m.price_max; })
       .map((r) => {
         const id = s(r.id);
         const z = s(r.zipCode);
-        const st = stat(z);
+        const st = similarFor(r);
         const p = prev.get(id);
-        const v = vet(r, { zipMedian: st.med, zipP75: st.p75, settings, prev: p });
+        const v = vet(r, { similar: st.med, similarN: st.n, settings, prev: p });
         if (v.qualified) qualified++;
         const agent = (r.listingAgent ?? null) as Rc | null;
         const office = (r.listingOffice ?? null) as Rc | null;
