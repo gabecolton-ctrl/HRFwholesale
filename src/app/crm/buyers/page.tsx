@@ -48,6 +48,7 @@ export default async function Buyers({ searchParams }: { searchParams: Promise<S
         title="Cash buyers"
         sub={`${count ?? 0} ${segmented ? "match this segment" : "active buyers"}`}
         actions={<>
+          <Link href="/crm/buyers/prospects" className="btn btn-dark btn-sm">Buyer prospects (PropStream)</Link>
           {profile.role === "owner" && <Link href="/crm/import?type=buyers" className="btn btn-ghost btn-sm">Import CSV</Link>}
           <Link href="/crm/buyers/new" className="btn btn-primary btn-sm">Add buyer</Link>
         </>}
