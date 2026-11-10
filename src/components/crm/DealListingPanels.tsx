@@ -97,7 +97,7 @@ export async function AlertsPanel({ supabase, dealId, published, available }: { 
             <SubmitButton className="btn btn-ghost btn-sm" pendingText="Sending…">Email everyone else ({pendingRest})</SubmitButton></form>
         </div>
       )}
-      <p className="hint mt-2">Playbook: blast your best buyers (Tier A) first, then the full list. Each buyer gets one email per deal. Emails show the area and numbers; the street address unlocks only after the buyer acknowledges the disclosure in the portal.</p>
+      <p className="hint mt-2"><b>Automatic:</b> when you publish a deal, matching Tier A buyers are emailed right away. The rest of your matching buyers get it the next morning (or right away if no Tier A buyer matches), and anyone who joins later with a matching buy box gets it the morning after they join, as long as the deal is live. Use the buttons to send sooner. Each buyer gets one email per deal. Emails show the area and numbers; the street address unlocks only after the buyer acknowledges the disclosure in the portal.</p>
     </section>
   );
 }

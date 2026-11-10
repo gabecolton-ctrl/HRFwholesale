@@ -6,7 +6,7 @@ import { requireRole } from "@/lib/auth";
 import { DEAL_STATUSES, EXIT_STRATEGIES, REHAB_LEVELS } from "@/lib/constants";
 import { toNumber, toText } from "@/lib/format";
 import { checkUpload, uploadPrivate } from "@/lib/files";
-import { sendDealAlerts } from "@/lib/alerts";
+import { alertOnPublish, sendDealAlerts } from "@/lib/alerts";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type DealFormState = { error?: string };
@@ -115,7 +115,7 @@ export async function createDeal(_prev: DealFormState, fd: FormData): Promise<De
   if (problem) redirect(`/crm/pipeline/${data.id}?error=${encodeURIComponent("Deal saved, but: " + problem)}`);
   let note = "";
   if (wantPublish) {
-    const r = await sendDealAlerts(data.id, "A").catch((e) => ({ sent: 0, failed: 0, skipped: 0, note: (e as Error).message }));
+    const r = await alertOnPublish(data.id).catch((e) => ({ sent: 0, failed: 0, skipped: 0, note: (e as Error).message }));
     note = r.sent ? `&alerted=${r.sent}` : r.note ? `&alertnote=${encodeURIComponent(r.note)}` : "";
   }
   redirect(`/crm/pipeline/${data.id}?saved=1${note}`);
@@ -142,7 +142,7 @@ export async function updateDeal(_prev: DealFormState, fd: FormData): Promise<De
   // Just published: email Tier A matching buyers first (playbook: best buyers first).
   let note = "";
   if (row.published_to_portal === true && before && !before.published_to_portal) {
-    const r = await sendDealAlerts(id, "A").catch((e) => ({ sent: 0, failed: 0, skipped: 0, note: (e as Error).message }));
+    const r = await alertOnPublish(id).catch((e) => ({ sent: 0, failed: 0, skipped: 0, note: (e as Error).message }));
     note = r.sent ? `&alerted=${r.sent}` : r.note ? `&alertnote=${encodeURIComponent(r.note)}` : "";
   }
   redirect(`/crm/pipeline/${id}?saved=1${note}`);

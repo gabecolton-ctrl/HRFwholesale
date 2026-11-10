@@ -4,6 +4,7 @@ import { pullFeed, type Feed } from "@/lib/socrata";
 import { syncList, type LeadList } from "@/lib/distress";
 import { scanMarket, type Market } from "@/lib/scanner";
 import { getSettings } from "@/lib/settings";
+import { sendScheduledAlerts } from "@/lib/alerts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -46,6 +47,12 @@ export async function GET(req: NextRequest) {
         out[`scan:${m.city}`] = { error: (e as Error).message };
       }
     }
+  }
+  // Deal alerts: the rest of the buyers list after Tier A's head start, plus newly joined buyers.
+  try {
+    out.alerts = await sendScheduledAlerts();
+  } catch (e) {
+    out.alerts = { error: (e as Error).message };
   }
   return NextResponse.json({ ok: true, ...out });
 }

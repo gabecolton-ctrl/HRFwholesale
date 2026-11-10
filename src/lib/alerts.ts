@@ -121,3 +121,42 @@ You're getting this because ${esc(m.name)} joined the H.R.F Assets LLC buyers li
   }
   return { sent, failed, skipped: 0, note: failed ? "Some emails failed. Check your Resend dashboard." : "" };
 }
+
+/** Hours Tier A buyers get to themselves before everyone else is emailed (the daily run sends the rest). */
+export const REST_DELAY_HOURS = Number(process.env.ALERT_REST_DELAY_HOURS ?? 20);
+
+/**
+ * Called the moment a deal is published to the portal: emails matching Tier A buyers right away.
+ * If no Tier A buyer matches, there's nobody to give a head start to, so everyone else is emailed now.
+ */
+export async function alertOnPublish(dealId: string) {
+  const a = await sendDealAlerts(dealId, "A");
+  const matches = await matchingBuyers(dealId).catch(() => [] as Match[]);
+  if (!matches.some((m) => m.tier === "A")) {
+    const rest = await sendDealAlerts(dealId, "rest");
+    return { sent: a.sent + rest.sent, failed: a.failed + rest.failed, skipped: a.skipped + rest.skipped, note: rest.note || a.note, restNow: true };
+  }
+  return { ...a, restNow: false };
+}
+
+/**
+ * Daily: for every live published deal, email any matching buyer who hasn't heard about it yet —
+ * the rest of the list once Tier A's head start is over, plus buyers who joined since.
+ */
+export async function sendScheduledAlerts() {
+  const db = createAdminClient();
+  const cutoff = new Date(Date.now() - REST_DELAY_HOURS * 3_600_000).toISOString();
+  const { data: deals } = await db
+    .from("deals")
+    .select("id,published_at")
+    .eq("published_to_portal", true)
+    .in("status", ["Under contract", "Marketing"]);
+  const out: Record<string, number> = {};
+  for (const d of deals ?? []) {
+    const scopes: ("A" | "rest")[] = d.published_at && d.published_at <= cutoff ? ["A", "rest"] : ["A"];
+    let sent = 0;
+    for (const sc of scopes) sent += (await sendDealAlerts(d.id, sc).catch(() => ({ sent: 0 }))).sent;
+    if (sent) out[d.id] = sent;
+  }
+  return out;
+}
