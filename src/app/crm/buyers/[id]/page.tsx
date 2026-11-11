@@ -9,7 +9,7 @@ import { deleteBuyer } from "../actions";
 
 export const metadata = { title: "Buyer" };
 
-export default async function BuyerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
+export default async function BuyerPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string; error?: string; pof_declined?: string; pof_approved?: string }> }) {
   const { supabase, profile } = await requireRole("owner", "dispositions");
   const { id } = await params;
   const sp = await searchParams;
@@ -22,6 +22,10 @@ export default async function BuyerPage({ params, searchParams }: { params: Prom
       <div className="mb-3 text-sm"><Link href="/crm/buyers" className="text-ink-soft underline">← Buyers</Link></div>
       <PageHeader title={b.name} sub={`${b.company ?? "No company"} · added ${dateShort(b.created_at)}${b.user_id ? " · has a portal login" : ""}`} />
       {sp.saved && <Notice>Saved.</Notice>}
+      {sp.pof_approved && <Notice>Proof of funds approved.</Notice>}
+      {sp.pof_declined === "1" && <Notice>Proof of funds declined. We emailed {b.name} asking for a new one.</Notice>}
+      {sp.pof_declined === "0" && <Notice tone="amber">Proof of funds declined, but no email went out ({b.email ? "email sending isn't set up" : "this buyer has no email on file"}). Let them know another way.</Notice>}
+      {sp.pof_declined === "failed" && <Notice tone="danger">Proof of funds declined, but the email failed to send. Check Resend, or contact them another way.</Notice>}
       {sp.error && <Notice tone="danger">{sp.error}</Notice>}
       <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
         <BuyerEditor b={b} />

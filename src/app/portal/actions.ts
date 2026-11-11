@@ -7,6 +7,8 @@ import { checkUpload, uploadPrivate } from "@/lib/files";
 import { phoneDigits, toList, toNumber, toText } from "@/lib/format";
 import { PROPERTY_TYPES, REHAB_LEVELS, STRATEGIES } from "@/lib/constants";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { notifyTeam } from "@/lib/email";
+import { appHref } from "@/lib/site";
 
 export async function updateBuyBox(fd: FormData) {
   const { supabase, user } = await requireRole("buyer");
@@ -38,13 +40,14 @@ export async function uploadPof(fd: FormData) {
   const err = checkUpload(file);
   if (err || !file || file.size === 0) redirect("/portal/account?error=" + encodeURIComponent(err ?? "Choose a file first"));
   // RLS check: the buyer must own a buyer record.
-  const { data: row } = await supabase.from("cash_buyers").select("id").eq("user_id", user.id).single();
+  const { data: row } = await supabase.from("cash_buyers").select("id,name").eq("user_id", user.id).single();
   if (!row) redirect("/portal/account?error=No+buyer+profile");
   const path = await uploadPrivate("proof-of-funds", user.id, file);
   await createAdminClient()
     .from("cash_buyers")
     .update({ pof_path: path, pof_uploaded_at: new Date().toISOString(), pof_verified: false })
     .eq("id", row.id);
+  await notifyTeam(`Proof of funds to review: ${row.name}`, [`${row.name} uploaded a new proof of funds.`], appHref(`/crm/buyers/${row.id}`)).catch(() => {});
   revalidatePath("/portal/account");
   redirect("/portal/account?saved=1");
 }

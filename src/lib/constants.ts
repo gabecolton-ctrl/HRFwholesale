@@ -181,3 +181,12 @@ export const US_STATES: [string, string][] = [
   ["WY", "Wyoming"],
 ];
 export const STATE_CODES = US_STATES.map(([c]) => c);
+
+/** Reasons you can pick when declining a buyer's proof of funds (shown to the buyer in the email). */export const POF_DECLINE_REASONS = [
+  "It's older than 30 days",
+  "The amount doesn't cover our deals",
+  "It isn't a bank, lender or brokerage statement",
+  "The name doesn't match your buyer profile",
+  "We couldn't read it (blurry, cut off or password-protected)",
+  "Other",
+];

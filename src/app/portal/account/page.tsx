@@ -1,3 +1,4 @@
+import { pofStatus } from "@/lib/format";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { BuyBoxFields } from "@/components/BuyBoxFields";
@@ -32,14 +33,18 @@ export default async function Portal({ searchParams }: { searchParams: Promise<{
             <section className="card p-6">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="h-display text-xl font-semibold">Proof of funds</h2>
-                {b.pof_verified ? (
-                  <span className="pill bg-sage/15 text-sage">Verified</span>
-                ) : b.pof_path ? (
-                  <span className="pill bg-amber/15 text-amber">Under review</span>
-                ) : (
-                  <span className="pill bg-danger/10 text-danger">Missing</span>
-                )}
+                {{
+                  verified: <span className="pill bg-sage/15 text-sage">Verified</span>,
+                  review: <span className="pill bg-amber/15 text-amber">Under review</span>,
+                  declined: <span className="pill bg-danger/10 text-danger">Not accepted, please resubmit</span>,
+                  missing: <span className="pill bg-danger/10 text-danger">Missing</span>,
+                }[pofStatus(b)]}
               </div>
+              {pofStatus(b) === "declined" && (
+                <p className="mt-3 rounded-lg bg-danger/5 px-3 py-2 text-sm text-danger">
+                  We couldn&apos;t accept your last proof of funds{b.pof_decline_reason ? `: ${b.pof_decline_reason}` : "."} Please upload a recent statement (last 30 days) from a bank, lender or brokerage showing your name and available funds.
+                </p>
+              )}
               {b.pof_uploaded_at && <p className="mt-1 text-sm text-ink-soft">Last uploaded {dateShort(b.pof_uploaded_at)}</p>}
               <form action={uploadPof} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <input name="pof" type="file" required accept="application/pdf,image/jpeg,image/png,image/heic,image/webp"

@@ -78,3 +78,13 @@ export function addressKey(address: string, zip?: string | null) {
   const z = (zip ?? "").replace(/\D/g, "").slice(0, 5);
   return a + z;
 }
+
+/** Proof-of-funds status from the buyer record. A decline only counts if it's newer than the last upload. */
+export function pofStatus(b: Record<string, unknown>) {
+  if (b.pof_verified === true) return "verified" as const;
+  if (!b.pof_path) return "missing" as const;
+  const up = b.pof_uploaded_at ? String(b.pof_uploaded_at) : "";
+  const dec = b.pof_declined_at ? String(b.pof_declined_at) : "";
+  if (dec && (!up || dec >= up)) return "declined" as const;
+  return "review" as const;
+}

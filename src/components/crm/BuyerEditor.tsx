@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { BuyBoxFields } from "@/components/BuyBoxFields";
 import { SubmitButton } from "@/components/SubmitButton";
-import { saveBuyer } from "@/app/crm/buyers/actions";
+import { approvePof, declinePof, saveBuyer } from "@/app/crm/buyers/actions";
+import { POF_DECLINE_REASONS } from "@/lib/constants";
+import { pofStatus } from "@/lib/format";
 
 type B = Record<string, unknown> & { id?: string; areas?: string[]; property_types?: string[]; rehab_levels?: string[]; strategies?: string[] };
 const s = (b: B, k: string) => (b[k] === null || b[k] === undefined ? "" : String(b[k]));
@@ -34,14 +36,42 @@ export function BuyerEditor({ b = {} }: { b?: B }) {
       </section>
 
       <section className="card grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-        <h2 className="col-span-full text-sm font-bold tracking-wide text-ink-soft uppercase">Proof of funds</h2>
+        <div className="col-span-full flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-bold tracking-wide text-ink-soft uppercase">Proof of funds</h2>
+          {b.id && (() => {
+            const st = pofStatus(b);
+            const cls = { verified: "bg-sage/15 text-sage", review: "bg-amber/15 text-amber", declined: "bg-danger/10 text-danger", missing: "bg-ink/5 text-ink-soft" }[st];
+            const label = { verified: "Verified", review: "Needs your review", declined: "Declined, waiting for a new one", missing: "Missing" }[st];
+            return <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${cls}`}>{label}</span>;
+          })()}
+        </div>
         <div className="col-span-full flex flex-wrap items-center gap-3">
           {b.pof_path ? (
             <Link href={`/api/files/pof/${b.id}`} target="_blank" className="btn btn-ghost btn-sm">View current proof of funds</Link>
           ) : (
             <span className="text-sm text-ink-soft">None uploaded yet.</span>
           )}
+          {b.pof_uploaded_at ? <span className="text-xs text-ink-soft">Uploaded {new Date(String(b.pof_uploaded_at)).toLocaleDateString("en-US")}</span> : null}
         </div>
+        {b.id && pofStatus(b) === "declined" && b.pof_decline_reason ? (
+          <p className="col-span-full rounded-lg bg-danger/5 px-3 py-2 text-sm text-danger">Declined {new Date(String(b.pof_declined_at)).toLocaleDateString("en-US")}: {String(b.pof_decline_reason)}</p>
+        ) : null}
+        {b.id && b.pof_path && pofStatus(b) === "review" ? (
+          <div className="col-span-full grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+            <p className="col-span-full text-sm font-semibold">Review it: approve, or decline and the buyer gets an email asking for a new one.</p>
+            <div>
+              <label className="label" htmlFor="pof_decline_reason">Reason (if declining)</label>
+              <select id="pof_decline_reason" name="pof_decline_reason" className="input">
+                {POF_DECLINE_REASONS.map((r) => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div><label className="label" htmlFor="pof_decline_note">Note to the buyer (optional)</label><input id="pof_decline_note" name="pof_decline_note" className="input" placeholder="e.g. We need at least $150k available" /></div>
+            <div className="flex gap-2">
+              <button formAction={approvePof} formNoValidate className="btn btn-sm bg-sage text-white">Approve</button>
+              <button formAction={declinePof} formNoValidate className="btn btn-sm bg-danger text-white">Decline &amp; email</button>
+            </div>
+          </div>
+        ) : null}
         <div><label className="label" htmlFor="pof">{b.pof_path ? "Replace file" : "Upload file"}</label>
           <input id="pof" name="pof" type="file" accept="application/pdf,image/jpeg,image/png,image/heic,image/webp" className="block w-full text-sm" />
           <p className="hint">PDF or photo, up to 4 MB.</p></div>

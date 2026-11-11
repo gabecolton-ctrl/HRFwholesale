@@ -1,3 +1,4 @@
+import { pofStatus } from "@/lib/format";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { Empty, Flag, Notice, PageHeader } from "@/components/crm/ui";
@@ -17,7 +18,7 @@ export default async function Buyers({ searchParams }: { searchParams: Promise<S
 
   let q = supabase
     .from("cash_buyers")
-    .select("id,name,company,phone,email,areas,price_min,price_max,rehab_levels,strategies,property_types,tier,pof_verified,pof_path,status,deals_closed,last_deal_at,user_id,sms_consent,email_alerts", { count: "exact" });
+    .select("id,name,company,phone,email,areas,price_min,price_max,rehab_levels,strategies,property_types,tier,pof_verified,pof_path,pof_uploaded_at,pof_declined_at,status,deals_closed,last_deal_at,user_id,sms_consent,email_alerts", { count: "exact" });
   if (sp.inactive !== "1") q = q.eq("status", "Active");
   if (sp.area) {
     const a = sp.area.trim();
@@ -105,7 +106,7 @@ export default async function Buyers({ searchParams }: { searchParams: Promise<S
               <p className="mt-2 text-sm">{b.areas.length ? b.areas.join(", ") : <span className="text-ink-soft">No areas set</span>}</p>
               <p className="text-sm text-ink-soft">{money(b.price_min)} – {money(b.price_max)} · {b.rehab_levels.join(", ") || "any rehab"} · {b.strategies.join("/") || "—"}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {b.pof_verified ? <Flag tone="sage">POF verified</Flag> : b.pof_path ? <Flag tone="amber">POF to review</Flag> : <Flag tone="danger">No POF</Flag>}
+                {{ verified: <Flag tone="sage">POF verified</Flag>, review: <Flag tone="amber">POF to review</Flag>, declined: <Flag tone="danger">POF declined</Flag>, missing: <Flag tone="danger">No POF</Flag> }[pofStatus(b)]}
                 {b.user_id && <Flag>Portal account</Flag>}
                 {b.deals_closed > 0 && <Flag tone="clay">{b.deals_closed} closed · last {dateShort(b.last_deal_at)}</Flag>}
                 {b.status === "Inactive" && <Flag>Inactive</Flag>}
